@@ -11,6 +11,8 @@ import time
 import shutil
 import urllib
 
+from sets import Set
+
 import bugzilla
 from deb import controlfile, source, version
 from util import compress, shell, tree
@@ -33,6 +35,7 @@ FILES_DIR   = "files"
 SOURCES_DIR = "sources"
 WORK_DIR    = "work"
 FINAL_DIR   = "public_html/ongoing-merge"
+PATCHES_DIR = "public_html/patches"
 
 # URL of FINAL_DIR
 FINAL_URL = "http://people.ubuntu.com/~scott/ongoing-merge"
@@ -79,6 +82,8 @@ def main():
                 file_bug(package, component)
             except Exception, e:
                 print >>sys.stderr, "W: Unable to file bug: %s" % str(e)
+
+            analyse_patch(package, ubuntu_ver, ubuntu_patch)
 
         except Excuse, e:
             print >>sys.stderr, "W:", str(e)
@@ -952,6 +957,111 @@ def file_bug(package, component):
                                subject, comment, severity=severity,
                                alias=alias)
             print "   - Created bug %d on UNKNOWN" % bug_id
+
+
+def analyse_patch(package, version, patch_file):
+    """Analyse a patch and produce useful files of differences."""
+    hunks = read_patch(patch_file)
+
+    output = {}
+    for hunk in hunks:
+        category = analyse_hunk(hunk)
+        if category is None:
+            continue
+        elif category not in output:
+            output[category] = []
+
+        output[category].append(hunk)
+
+    write_analysed_patches(package, version, output)
+
+def analyse_hunk(hunk):
+    """Analyse a single hunk of a patch and return category for it."""
+    (file_hdr, file_name, hunk_hdr, hunk_lines) = hunk
+
+    if file_name.endswith("/ChangeLog"):
+        return "misc"
+    elif file_name.endswith("/debian/changelog"):
+        return "misc"
+    elif file_name.endswith("/debian/control"):
+        return "misc"
+    elif file_name.endswith("/debian/control.in"):
+        return "misc"
+    else:
+        return analyse_hunk_lines(hunk_lines)
+
+def analyse_hunk_lines(hunk_lines):
+    """Analyse the lines of a single hunk and return a category."""
+    categories = Set()
+
+    added = removed = 0
+
+    for line in hunk_lines:
+        if line.startswith("-"):
+            removed += 1
+
+            if "debian" in line.lower() and "ubuntu" not in line.lower():
+                categories.add("branding")
+            elif line.startswith("-\"POT-Creation-Date"):
+                categories.add(None)
+        elif line.startswith("+"):
+            added += 1
+
+            if "ubuntu" in line.lower() and "debian" not in line.lower():
+                categories.add("branding")
+            elif "lsb/init-functions" in line:
+                categories.add("lsb-init")
+            elif "log_success_msg" in line:
+                categories.add("lsb-init")
+            elif "log_failure_msg" in line:
+                categories.add("lsb-init")
+            elif "log_warning_msg" in line:
+                categories.add("lsb-init")
+            elif "log_begin_msg" in line:
+                categories.add("lsb-init")
+            elif "log_end_msg" in line:
+                categories.add("lsb-init")
+            elif line.startswith("+\"POT-Creation-Date"):
+                categories.add(None)
+
+    if "branding" in categories and (not added or not removed):
+        categories.remove("branding")
+
+    if not len(categories):
+        return "unknown"
+    elif len(categories) > 1:
+        return "mixed"
+    else:
+        return categories.pop()
+
+def write_analysed_patches(package, version, output):
+    """Write result of analysing patches."""
+    categories = output.keys()
+    categories.sort()
+
+    for cat in categories:
+        patch_dir = "%s/%s" % (PATCHES_DIR, package)
+        if not os.path.isdir(patch_dir):
+            os.makedirs(patch_dir)
+
+        patch_file = "%s/%s_%s_%s.patch" % (patch_dir, package, version, cat)
+        write_patch(patch_file, output[cat])
+
+def write_patch(patch_file, hunks):
+    """Write patch from hunks."""
+    print " * Writing %s" % patch_file
+
+    patch = open(patch_file, "w")
+    try:
+        last_file_hdr = None
+        for (file_hdr, file_name, hunk_hdr, hunk_lines) in hunks:
+            if file_hdr != last_file_hdr:
+                print >>patch, "\n".join(file_hdr)
+                last_file_hdr = file_hdr
+
+            write_hunk(patch, hunk_hdr, hunk_lines)
+    finally:
+        patch.close()
 
 
 if __name__ == "__main__":
