@@ -1043,6 +1043,10 @@ def write_analysed_patches(package, version, output):
         patch_dir = "%s/%s" % (PATCHES_DIR, package)
         if not os.path.isdir(patch_dir):
             os.makedirs(patch_dir)
+        else:
+            entries = os.listdir(patch_dir)
+            for entry in entries:
+                os.unlink(os.path.join(patch_dir, entry))
 
         patch_file = "%s/%s_%s_%s.patch" % (patch_dir, package, version, cat)
         write_patch(patch_file, output[cat])
