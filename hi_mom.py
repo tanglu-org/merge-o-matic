@@ -646,6 +646,8 @@ def apply_hunk(work_dir, merged_src, merged_dropped, file_hdr, file_name,
 
 def update_attr(filename, right_src, left_src, base_src, merged_src):
     """Update file attributes."""
+    filename = filename[filename.index("/") + 1:]
+
     right_file = "%s/%s" % (right_src, filename)
     left_file = "%s/%s" % (left_src, filename)
     base_file = "%s/%s" % (base_src, filename)
