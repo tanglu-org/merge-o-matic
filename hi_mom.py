@@ -355,6 +355,9 @@ def create_final_dir(package):
         previous_name = [ _e for _e in entries if _e[-4:] == ".dsc" ][0][:-4]
         previous = "%s/HISTORY/%s" % (FINAL_DIR, previous_name)
 
+        if os.path.isdir(previous):
+            tree.rmtree(previous)
+
         os.mkdir(previous)
         for entry in entries:
             os.rename(os.path.join(final_dir, entry),
