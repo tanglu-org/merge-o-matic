@@ -559,7 +559,7 @@ def apply_patch(work_dir, hunks, right_src, left_src, base_src, merged_src,
 
     dropped = 0
     for file_hdr, file_name, hunk_hdr, hunk_lines in list(hunks):
-        update_attr(filename, right_src, left_src, base_src, merged_src)
+        update_attr(file_name, right_src, left_src, base_src, merged_src)
 
         if file_name.endswith("/ChangeLog"):
             mutate_changelog(hunk_hdr, hunk_lines)
