@@ -866,7 +866,10 @@ def file_bug(package, component):
     bzweb = bugzilla.WebInterface(BUGZILLA_URL)
     bz = bzweb.login(BUGZILLA_USERNAME, BUGZILLA_PASSWORD)
 
-    alias = "merge-%s" % package
+    if len(package) > 14:
+        alias = "merge-%s-%s" % (package[:9], package[-4:])
+    else:
+        alias = "merge-%s" % package
     subject = "%s: new changes from Debian require merging" % package
 
     comment  = "New changes from Debian require merging into Ubuntu.\n\n"
