@@ -343,13 +343,13 @@ def create_final_dir(package):
     final_dir = "%s/%s" % (FINAL_DIR, package)
     if os.path.isdir(final_dir):
         entries = os.listdir(final_dir)
-        previous = "%s/%s" % (final_dir, ",,previous")
+        previous_name = [ _e for _e in entries if _e[-4:] == ".dsc" ][0][:-4]
+        previous = "%s/HISTORY/%s" % (FINAL_DIR, previous_name)
+
         os.mkdir(previous)
         for entry in entries:
             os.rename(os.path.join(final_dir, entry),
                       os.path.join(previous, entry))
-
-        os.rename(previous, os.path.join(final_dir, "previous"))
     else:
         os.mkdir(final_dir)
 
