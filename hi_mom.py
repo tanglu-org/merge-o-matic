@@ -556,6 +556,8 @@ def apply_patch(work_dir, hunks, right_src, left_src, base_src, merged_src,
 
     dropped = 0
     for file_hdr, file_name, hunk_hdr, hunk_lines in list(hunks):
+        update_attr(filename, right_src, left_src, base_src, merged_src)
+
         if file_name.endswith("/ChangeLog"):
             mutate_changelog(hunk_hdr, hunk_lines)
 
@@ -637,6 +639,37 @@ def apply_hunk(work_dir, merged_src, merged_dropped, file_hdr, file_name,
             os.unlink(junk)
 
     return patch_worked
+
+def update_attr(filename, right_src, left_src, base_src, merged_src):
+    """Update file attributes."""
+    right_file = "%s/%s" % (right_src, filename)
+    left_file = "%s/%s" % (left_src, filename)
+    base_file = "%s/%s" % (base_src, filename)
+    merged_file = "%s/%s" % (merged_src, filename)
+
+    right_stat = os.stat(right_file)
+    base_stat = os.stat(base_file)
+
+    for shift in range(0, 9):
+        bit = 1 << shift
+
+        # Permission bit added on right-hand
+        if not base_stat.st_mode & bit and right_stat.st_mode & bit:
+            change_attr(merged_file, bit, True)
+
+        # Permission bit removed on right-hand
+        if base_stat.st_mode & bit and not right_stat.st_mode & bit:
+            change_attr(merged_file, bit, False)
+
+def change_attr(filename, bit, add):
+    """Change file attributes."""
+    attr = os.stat(filename).st_mode & 0777
+    if add:
+        attr |= bit
+    else:
+        attr &= ~bit
+
+    os.chmod(filename, attr)
 
 
 def mutate_changelog(hunk_hdr, hunk_lines):
