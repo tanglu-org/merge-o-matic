@@ -617,6 +617,8 @@ def apply_hunk(work_dir, merged_src, merged_dropped, file_hdr, file_name,
             for line in out:
                 if " FAILED -- " in line:
                     patch_worked = False
+                elif "No file to patch." in line:
+                    patch_worked = False
         finally:
             out.close()
 
