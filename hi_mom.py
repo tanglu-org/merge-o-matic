@@ -79,7 +79,8 @@ def main():
                          final_dir, winning_side)
 
             try:
-                file_bug(package, component)
+                if len(sys.argv) <= 1:
+                    file_bug(package, component)
             except Exception, e:
                 print >>sys.stderr, "W: Unable to file bug: %s" % str(e)
 
@@ -215,7 +216,7 @@ def pool_url(mirror, package):
 
 def get_joblist():
     """Return (package, component) for each job."""
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 1 and sys.argv[1][0] != '-':
         return zip(sys.argv[1::2], sys.argv[2::2])
 
     result = []
