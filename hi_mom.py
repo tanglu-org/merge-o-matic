@@ -216,7 +216,7 @@ def pool_url(mirror, package):
 def get_joblist():
     """Return (package, component) for each job."""
     if len(sys.argv) > 1:
-        return zip(sys.argv[::2], sys.argv[1::2])
+        return zip(sys.argv[1::2], sys.argv[2::2])
 
     result = []
     filename = update_joblist()
