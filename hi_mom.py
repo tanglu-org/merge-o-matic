@@ -653,8 +653,11 @@ def update_attr(filename, right_src, left_src, base_src, merged_src):
     base_file = "%s/%s" % (base_src, filename)
     merged_file = "%s/%s" % (merged_src, filename)
 
-    right_stat = os.stat(right_file)
-    base_stat = os.stat(base_file)
+    try:
+        right_stat = os.stat(right_file)
+        base_stat = os.stat(base_file)
+    except OSError:
+        return
 
     for shift in range(0, 9):
         bit = 1 << shift
