@@ -84,8 +84,6 @@ def main():
             except Exception, e:
                 print >>sys.stderr, "W: Unable to file bug: %s" % str(e)
 
-            analyse_patch(package, ubuntu_ver, ubuntu_patch)
-
         except Excuse, e:
             print >>sys.stderr, "W:", str(e)
             continue
@@ -369,7 +367,10 @@ def create_final_dir(package):
 
 def create_patch(name, package, base, diff):
     """Create patches between two unpacked sources."""
-    filename = "%s/%s/%s_%s.patch" % (FINAL_DIR, package, package, name)
+    if name is not None:
+        filename = "%s/%s/%s_%s.patch" % (FINAL_DIR, package, package, name)
+    else:
+        filename = "%s/%s/%s_%s.patch" % (PATCHES_DIR, package, package, diff)
     base_dir = "%s_%s" % (package, base)
     diff_dir = "%s_%s" % (package, diff)
 
@@ -1084,12 +1085,6 @@ def analyse_hunk_lines(hunk_lines):
 def write_analysed_patches(package, version, output):
     """Write result of analysing patches."""
     patch_dir = "%s/%s" % (PATCHES_DIR, package)
-    if not os.path.isdir(patch_dir):
-        os.makedirs(patch_dir)
-    else:
-        entries = os.listdir(patch_dir)
-        for entry in entries:
-            os.unlink(os.path.join(patch_dir, entry))
 
     categories = output.keys()
     categories.sort()
