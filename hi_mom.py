@@ -76,7 +76,7 @@ def main():
                          final_dir)
 
             try:
-                file_bug(package)
+                file_bug(package, component)
             except Exception, e:
                 print >>sys.stderr, "W: Unable to file bug: %s" % str(e)
 
@@ -861,9 +861,8 @@ def write_report(package, debian_ver, ubuntu_ver, base_ver, merged_ver,
     finally:
         report.close()
 
-def file_bug(package):
+def file_bug(package, component):
     """File a bug, so our hard work doesn't go to waste."""
-
     bzweb = bugzilla.WebInterface(BUGZILLA_URL)
     bz = bzweb.login(BUGZILLA_USERNAME, BUGZILLA_PASSWORD)
 
@@ -895,13 +894,20 @@ def file_bug(package):
         if old_bug_id is not None:
             bz.clear_alias(old_bug_id)
 
+        if component == "main":
+            severity = "normal"
+        else:
+            severity = "enhancement"
+
         try:
             bug_id = bz.submit(BUGZILLA_PRODUCT, package, "unspecified",
-                               subject, comment, alias=alias)
+                               subject, comment, severity=severity,
+                               alias=alias)
             print "   - Created bug %d" % bug_id
         except bugzilla.InvalidComponent:
             bug_id = bz.submit(BUGZILLA_PRODUCT, "UNKNOWN", "unspecified",
-                               subject, comment, alias=alias)
+                               subject, comment, severity=severity,
+                               alias=alias)
             print "   - Created bug %d on UNKNOWN" % bug_id
 
 
