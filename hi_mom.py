@@ -181,11 +181,10 @@ def find_snapshot(package, find_version):
         para_version = version.Version(para["Version"])
         if para_version == find_version:
             return (para, find_version)
-        elif para_version.upstream == find_version.upstream \
-             and para_version < find_version:
-            if nearest_version is None or nearest_version < para_version:
-                nearest_para = para
-                nearest_version = para_version
+        elif para_version < find_version \
+             and (nearest_version is None or nearest_version < para_version):
+            nearest_para = para
+            nearest_version = para_version
     else:
         return (nearest_para, nearest_version)
 
