@@ -114,13 +114,17 @@ def find_info(package, component, unstable, main, universe):
     ubuntu_ver = version.Version(ubuntu_info["Version"])
     print "   - %s: %s" % (component, ubuntu_ver)
 
-    # Figure out the base version, and sanity check it
+    # Figure out and find the base version using snapshot.debian.net
     if "ubuntu" not in ubuntu_info["Version"]:
         raise Problem, "Package has no ubuntu version component: %s (%s)" % (package, ubuntu_ver)
 
-    base_ver = version.Version(ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")])
-    print "   - base: %s" % base_ver
+    find_ver = version.Version(ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")])
+    (base_info, base_ver) = find_snapshot(package, find_ver)
+    if base_info is None:
+        raise Problem, "Package base version not found: %s (%s)" % (package, find_ver)
 
+    # Sanity check base version
+    print "   - base: %s" % base_ver
     if base_ver == debian_ver:
         raise Excuse, "Debian hasn't moved from base, skipping: %s (%s = %s)" % (package, base_ver, debian_ver)
     elif base_ver > debian_ver:
@@ -129,11 +133,6 @@ def find_info(package, component, unstable, main, universe):
         raise Excuse, "Ubuntu behind the base version (huh?), skipping: %s (%s > %s)" % (package, base_ver, ubuntu_ver)
     elif ubuntu_ver > debian_ver:
         raise Excuse, "Ubuntu ran ahead of Debian, skipping: %s (%s > %s)" % (package, ubuntu_ver, debian_ver)
-
-    # Find the base package using snapshot.debian.net
-    base_info = find_snapshot(package, base_ver)
-    if base_info is None:
-        raise Problem, "Package base version not found: %s (%s)" % (package, base_ver)
 
     return (debian_info, debian_ver, ubuntu_info, ubuntu_ver,
             base_info, base_ver)
@@ -164,7 +163,7 @@ def update_sources(mirror, dist, component):
 
     return filename
 
-def find_snapshot(package, version):
+def find_snapshot(package, find_version):
     """Find an old version of a package on snapshot.debian.net."""
     filename = update_snapshot_sources(SNAPSHOT_MIRROR, package)
     gzfile = gzip.open(filename)
@@ -173,11 +172,22 @@ def find_snapshot(package, version):
     finally:
         gzfile.close()
 
+    nearest_para = None
+    nearest_version = None
     for para in sources.paras:
-        if para["Package"] == package and para["Version"] == version:
-            return para
+        if para["Package"] != package:
+            continue
+
+        para_version = version.Version(para["Version"])
+        if para_version == find_version:
+            return (para, find_version)
+        elif para_version.upstream == find_version.upstream \
+             and para_version < find_version:
+            if nearest_version is None or nearest_version < para_version:
+                nearest_para = para
+                nearest_version = para_version
     else:
-        return None
+        return (nearest_para, nearest_version)
 
 def update_snapshot_sources(mirror, package):
     """Update the local Sources cache of package snapshots."""
