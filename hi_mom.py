@@ -879,7 +879,7 @@ def file_bug(package, component):
     comment += "In particular see the REPORT file for details.\n\n"
     comment += " -- Your friendly neighbourhood Merge-O-Matic.\n"
 
-    nag_msg  = "This is a reminder, further changes have occured in Debian\n"
+    nag_msg  = "This is a reminder, further changes have occurred in Debian\n"
     nag_msg += "since this report was filed.  The URL above has been updated\n"
     nag_msg += "with the new source package.\n"
 
