@@ -394,7 +394,7 @@ def merge(package, debian_ver, debian_dsc, debian_patch,
     """Perform the merge and create a new source package."""
     merged_ver = version.Version(str(debian_ver) + "ubuntu1")
 
-    work_dir = "%s/%s_%s" % (WORK_DIR, package, merged_ver)
+    work_dir = os.path.abspath("%s/%s_%s" % (WORK_DIR, package, merged_ver))
     os.mkdir(work_dir)
     try:
         # Work out where things are
