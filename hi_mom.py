@@ -67,13 +67,13 @@ def main():
                                             ubuntu_info, ubuntu_ver,
                                             base_info, base_ver)
 
-            (merged_ver, merged_dsc,
-             merged_patch) = merge(package, debian_ver, debian_dsc, debian_patch,
-                                   ubuntu_ver, ubuntu_dsc, ubuntu_patch,
-                                   base_ver, base_dsc, final_dir)
+            (merged_ver, merged_dsc, merged_patch, winning_side) \
+                         = merge(package, debian_ver, debian_dsc, debian_patch,
+                                 ubuntu_ver, ubuntu_dsc, ubuntu_patch,
+                                 base_ver, base_dsc, final_dir)
 
             write_report(package, debian_ver, ubuntu_ver, base_ver, merged_ver,
-                         final_dir)
+                         final_dir, winning_side)
 
             try:
                 file_bug(package, component)
@@ -215,7 +215,6 @@ def get_joblist():
 def update_joblist():
     """Update the local job list cache."""
     filename = "%s/needs-merged.txt" % CACHE_DIR
-    return filename #SNARF
     url = JOBLIST_URL
 
     print " * Downloading %s" % url
@@ -401,25 +400,30 @@ def merge(package, debian_ver, debian_dsc, debian_patch,
         debian_src = "%s/%s_%s" % (SOURCES_DIR, package, debian_ver)
         ubuntu_src = "%s/%s_%s" % (SOURCES_DIR, package, ubuntu_ver)
         base_src = "%s/%s_%s" % (SOURCES_DIR, package, base_ver)
-        merged_src = "%s/%s_%s" % (work_dir, package, merged_ver)
 
-        # Create copy of the ubuntu version
-        print " * Creating copy of %s" % package
-        tree.copytree(ubuntu_src, merged_src)
+        # Try the patch both ways round and see which works better
+        sides = (("debian", debian_patch, debian_src, "ubuntu", ubuntu_src),
+                 ("ubuntu", ubuntu_patch, ubuntu_src, "debian", debian_src))
+        (winning_dropped, winning_side, winning_work_dir) = (None, None, None)
 
-        # Read the debian patch
-        debian_hunks = read_patch(debian_patch)
+        for right_name, right_patch, right_src, left_name, left_src in sides:
+            merge_work_dir = "%s/%s" % (work_dir, right_name)
+            dropped = try_merge(merge_work_dir, package, right_name,
+                                right_patch, right_src, left_name, left_src,
+                                base_src, merged_ver)
 
-        # Try to apply the patch
-        merged_dropped = "%s/%s_dropped.patch" % (work_dir, package)
-        dropped = apply_patch(work_dir, debian_hunks, debian_src, ubuntu_src,
-                              base_src, merged_src, merged_dropped)
+            if winning_dropped is None or winning_dropped > dropped:
+                winning_dropped = dropped
+                winning_side = right_name
+                winning_work_dir = merge_work_dir
 
-        # Add a changelog entry
-        add_changelog(package, merged_ver, merged_src)
+                if winning_dropped == 0:
+                    break
 
         # Create the source package
-        merged_dsc = create_source(work_dir, package, merged_ver, final_dir)
+        print " * Using result of applying %s patch" % winning_side
+        merged_dsc = create_source(winning_work_dir, package,
+                                   merged_ver, final_dir)
 
         # Create the patch (need to be careful here)
         try:
@@ -434,7 +438,29 @@ def merge(package, debian_ver, debian_dsc, debian_patch,
     finally:
         tree.rmtree(work_dir)
 
-    return (merged_ver, merged_dsc, merged_patch)
+    return (merged_ver, merged_dsc, merged_patch, winning_side)
+
+def try_merge(work_dir, package, right_name, right_patch, right_src,
+              left_name, left_src, base_src, merged_ver):
+    """Try merging a patch onto a source package."""
+    merged_src = "%s/%s_%s" % (work_dir, package, merged_ver)
+
+    # Create copy of the left-hand version
+    print " * Creating copy of %s %s" % (left_name, package)
+    tree.copytree(left_src, merged_src)
+
+    # Read the right-hand patch
+    hunks = read_patch(right_patch)
+
+    # Try to apply the right-hand patch to the left-hand version
+    merged_dropped = "%s/%s_%s-dropped.patch" % (work_dir, package, right_name)
+    dropped = apply_patch(work_dir, hunks, right_src, left_src, base_src,
+                          merged_src, merged_dropped)
+
+    # Add a changelog entry
+    add_changelog(package, merged_ver, merged_src)
+
+    return dropped
 
 
 def read_patch(patch_file):
@@ -508,7 +534,7 @@ def write_hunk(out, hunk_hdr, hunk_lines):
     print >>out, "\n".join(hunk_lines)
 
 
-def apply_patch(work_dir, hunks, debian_src, ubuntu_src, base_src, merged_src,
+def apply_patch(work_dir, hunks, right_src, left_src, base_src, merged_src,
                 merged_dropped):
     """Apply a patch decoded by read_patch to merged_src."""
     pot_files = {}
@@ -535,11 +561,11 @@ def apply_patch(work_dir, hunks, debian_src, ubuntu_src, base_src, merged_src,
             dropped += 1
 
     for pot_file in pot_files.keys():
-        if not update_pot(pot_file, debian_src, ubuntu_src, base_src, merged_src):
+        if not update_pot(pot_file, right_src, left_src, base_src, merged_src):
             dropped += 1
 
     for po_file in po_files.keys():
-        if not update_po(po_file, debian_src, ubuntu_src, base_src, merged_src):
+        if not update_po(po_file, right_src, left_src, base_src, merged_src):
             dropped += 1
 
     if dropped:
@@ -547,7 +573,7 @@ def apply_patch(work_dir, hunks, debian_src, ubuntu_src, base_src, merged_src,
     else:
         print "   - All patch hunks applied"
 
-    return (dropped == 0)
+    return dropped
 
 def apply_hunk(work_dir, merged_src, merged_dropped, file_hdr, file_name,
                hunk_hdr, hunk_lines):
@@ -664,22 +690,22 @@ def strip_context(hunk_hdr, hunk_lines):
     return new_hunks
 
 
-def update_pot(pot_file, debian_src, ubuntu_src, base_src, merged_src):
+def update_pot(pot_file, right_src, left_src, base_src, merged_src):
     """Update a .pot file using msgcat."""
     pot_file = pot_file[pot_file.index("/") + 1:]
 
-    debian_pot = "%s/%s" % (debian_src, pot_file)
-    ubuntu_pot = "%s/%s" % (ubuntu_src, pot_file)
+    right_pot = "%s/%s" % (right_src, pot_file)
+    left_pot = "%s/%s" % (left_src, pot_file)
     base_pot = "%s/%s" % (base_src, pot_file)
     merged_pot = "%s/%s" % (merged_src, pot_file)
 
-    if update_oneside(pot_file, debian_pot, ubuntu_pot, base_pot, merged_pot):
+    if update_oneside(pot_file, right_pot, left_pot, base_pot, merged_pot):
         return True
 
     print "   - Merging POT %s" % pot_file
     try:
-        cmd = ( "msgcat", "--use-first", "-o", merged_pot, debian_pot,
-                ubuntu_pot )
+        cmd = ( "msgcat", "--use-first", "-o", merged_pot, right_pot,
+                left_pot )
         shell.run(cmd)
     except shell.ProcessError, e:
         print "     + POT merge failed: %s" % str(e)
@@ -687,25 +713,25 @@ def update_pot(pot_file, debian_src, ubuntu_src, base_src, merged_src):
 
     return True
 
-def update_po(po_file, debian_src, ubuntu_src, base_src, merged_src):
+def update_po(po_file, right_src, left_src, base_src, merged_src):
     """Update a .po file using msgcat or msgmerge."""
     po_file = po_file[po_file.index("/") + 1:]
 
-    debian_po = "%s/%s" % (debian_src, po_file)
-    ubuntu_po = "%s/%s" % (ubuntu_src, po_file)
+    right_po = "%s/%s" % (right_src, po_file)
+    left_po = "%s/%s" % (left_src, po_file)
     base_po = "%s/%s" % (base_src, po_file)
     merged_po = "%s/%s" % (merged_src, po_file)
 
-    if update_oneside(po_file, debian_po, ubuntu_po, base_po, merged_po):
+    if update_oneside(po_file, right_po, left_po, base_po, merged_po):
         return True
 
     closest_pot = find_closest_pot(merged_po)
     if closest_pot is None:
-        return update_pot(po_file, debian_src, ubuntu_src, base_src, merged_src)
+        return update_pot(po_file, right_src, left_src, base_src, merged_src)
 
     print "   - Merging PO %s" % po_file
     try:
-        cmd = ( "msgmerge", "-o", merged_po, "-C", ubuntu_po, debian_po,
+        cmd = ( "msgmerge", "-o", merged_po, "-C", left_po, right_po,
                 closest_pot )
         shell.run(cmd)
     except shell.ProcessError, e:
@@ -723,40 +749,40 @@ def find_closest_pot(po_file):
     else:
         return None
 
-def update_oneside(filename, debian_file, ubuntu_file, base_file, merged_file):
+def update_oneside(filename, right_file, left_file, base_file, merged_file):
     """Update files by copying or deleting when they only exist on one side."""
     dirname = os.path.dirname(merged_file)
 
-    # File removed in Ubuntu, leave it removed
-    if os.path.exists(base_file) and not os.path.exists(ubuntu_file):
-        print "   + Leaving %s (removed in Ubuntu)" % filename
+    # File removed in left-hand, leave it removed
+    if os.path.exists(base_file) and not os.path.exists(left_file):
+        print "   + Leaving %s (removed in left-hand)" % filename
         return True
 
-    # File removed in Debian, remove it
-    if os.path.exists(base_file) and not os.path.exists(debian_file):
+    # File removed in right-hand, remove it
+    if os.path.exists(base_file) and not os.path.exists(right_file):
         if os.path.exists(merged_file):
-            print "   + Removing %s (removed in Debian)" % filename
+            print "   + Removing %s (removed in right-hand)" % filename
             os.unlink(merged_file)
 
         return True
 
-    # File new in Ubuntu only
-    if os.path.exists(ubuntu_file) and not os.path.exists(debian_file):
-        print "   + Leaving %s (added in Ubuntu)" % filename
+    # File new in left-hand only
+    if os.path.exists(left_file) and not os.path.exists(right_file):
+        print "   + Leaving %s (added in left-hand)" % filename
         return True
 
-    # File new in Debian only
-    if os.path.exists(debian_file) and not os.path.exists(ubuntu_file):
+    # File new in right-hand only
+    if os.path.exists(right_file) and not os.path.exists(left_file):
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
 
-        print "   + Copying %s (added in Debian)" % filename
-        shutil.copy2(debian_file, merged_file)
+        print "   + Copying %s (added in right-hand)" % filename
+        shutil.copy2(right_file, merged_file)
         return True
 
     # Removed both sides
-    if not os.path.exists(debian_file) and not os.path.exists(ubuntu_file):
-        print "   + Leaving %s (removed in Both)" % filename
+    if not os.path.exists(right_file) and not os.path.exists(left_file):
+        print "   + Leaving %s (removed in both)" % filename
         return True
 
     return False
@@ -821,7 +847,7 @@ def create_source(work_dir, package, version, final_dir):
 
 
 def write_report(package, debian_ver, ubuntu_ver, base_ver, merged_ver,
-                 final_dir):
+                 final_dir, winning_side):
     """Write a little report."""
     report_file = "%s/REPORT" % final_dir
     report = open(report_file, "w")
@@ -845,12 +871,14 @@ def write_report(package, debian_ver, ubuntu_ver, base_ver, merged_ver,
         print >>report, "\t%s_merged.patch  -- new changes in Ubuntu (%s -> %s)" % (package, debian_ver, merged_ver)
         print >>report
 
-        if os.path.exists("%s/%s_dropped.patch" % (final_dir, package)):
-            print >>report, "Some Debian patch hunks were dropped, see:"
-            print >>report, "\t%s_dropped.patch" % package
+        if os.path.exists("%s/%s_%s-dropped.patch" % (final_dir, package, winning_side)):
+            print >>report, "Some %s patch hunks were dropped, see:" % winning_side.upper()
+            print >>report, "\t%s_%s-dropped.patch" % (package, winning_side)
             print >>report
             print >>report, "These need to be applied manually if they are relevant."
-            print >>report
+        else:
+            print >>report, "The %s patch applied with no errors." % winning_side
+        print >>report
 
         if ubuntu_ver.upstream != merged_ver.upstream:
             sa_arg = " -sa"
