@@ -10,10 +10,22 @@ def main():
     main = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "main")
     universe = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "universe")
 
-    for package, ubuntu_info in main.items():
-        assay(package, ubuntu_info)
-    for package, ubuntu_info in universe.items():
-        assay(package, ubuntu_info)
+    todo = []
+    todo.extend(main.items())
+    todo.extend(universe.items())
+
+    for package, ubuntu_info in todo:
+        try:
+            assay(package, ubuntu_info)
+        except Excuse, e:
+            print >>sys.stderr, "W:", str(e)
+            continue
+        except Problem, e:
+            print >>sys.stderr, "E:", str(e)
+            continue
+        except Exception, e:
+            print >>sys.stderr, "!!", str(e)
+            continue
 
 
 def assay(package, ubuntu_info):
