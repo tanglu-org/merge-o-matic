@@ -389,7 +389,7 @@ def create_debdiff(name, package, base, diff):
         try:
             shell.run(cmd, stdout=output, stderr=sys.stdout)
         except shell.ProcessError, e:
-            raise Problem, "Unable to create debdiff file: %s_%s.debdiff (%s -> %s)" \
+            print >>sys.stderr, "W: Unable to create debdiff file: %s_%s.debdiff (%s -> %s)" \
                   % (package, name, base, diff)
     finally:
         output.close()
