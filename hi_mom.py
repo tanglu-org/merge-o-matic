@@ -75,7 +75,10 @@ def main():
             write_report(package, debian_ver, ubuntu_ver, base_ver, merged_ver,
                          final_dir)
 
-            file_bug(package)
+            try:
+                file_bug(package)
+            except Exception, e:
+                print >>sys.stderr, "W: Unable to file bug: %s" % str(e)
 
         except Excuse, e:
             print >>sys.stderr, "W:", str(e)
