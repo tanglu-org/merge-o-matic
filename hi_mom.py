@@ -880,6 +880,9 @@ def file_bug(package, component):
     comment += "your review are available at:\n\n"
     comment += "        %s/%s/\n\n" % (FINAL_URL, package)
     comment += "In particular see the REPORT file for details.\n\n"
+    comment += "If this is the first time you have received one of these\n"
+    comment += "bugs, or are just unsure what to do, see:\n\n"
+    comment += "        %s/README\n\n" % FINAL_URL
     comment += " -- Your friendly neighbourhood Merge-O-Matic.\n"
 
     nag_msg  = "This is a reminder, further changes have occurred in Debian\n"
