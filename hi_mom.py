@@ -1028,13 +1028,11 @@ def analyse_hunk(hunk):
     (file_hdr, file_name, hunk_hdr, hunk_lines) = hunk
 
     if file_name.endswith("/ChangeLog"):
-        return "misc"
+        return "changelog"
     elif file_name.endswith("/debian/changelog"):
-        return "misc"
-    elif file_name.endswith("/debian/control"):
-        return "misc"
-    elif file_name.endswith("/debian/control.in"):
-        return "misc"
+        return "changelog"
+    elif "/debian/" in file_name:
+        return "packaging"
     else:
         return analyse_hunk_lines(hunk_lines)
 
