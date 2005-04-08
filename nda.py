@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Nightly Difference Assay
+# Nightly Difference Analysis
 
 from hi_mom import *
 
