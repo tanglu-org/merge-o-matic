@@ -24,7 +24,7 @@ DEBIAN_MIRROR   = "http://ftp.uk.debian.org/debian"
 SNAPSHOT_MIRROR = "http://snapshot.debian.net/archive"
 
 # Ubuntu distribution to merge into
-UBUNTU_DIST = "hoary"
+UBUNTU_DIST = "breezy"
 
 # Where do we get our orders?
 JOBLIST_URL = "http://jackass/lorraine/needs-merged.txt"
