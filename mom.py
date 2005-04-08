@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# Hoary Intelligent Merge-O-Matic
+# Merge-O-Matic
 
 
 import os
