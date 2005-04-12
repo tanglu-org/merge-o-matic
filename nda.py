@@ -3,7 +3,7 @@
 #
 # Nightly Difference Analysis
 
-from hi_mom import *
+from mom import *
 
 
 def main():
