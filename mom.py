@@ -350,7 +350,13 @@ def create_final_dir(package):
     final_dir = "%s/%s" % (FINAL_DIR, package)
     if os.path.isdir(final_dir):
         entries = os.listdir(final_dir)
-        previous_name = [ _e for _e in entries if _e[-4:] == ".dsc" ][0][:-4]
+        previous_entry = [ _e for _e in entries if _e[-4:] == ".dsc" ]
+        if not len(previous_entry):
+            tree.rmtree(final_dir)
+            os.mkdir(final_dir)
+            return final_dir
+
+        previous_name = previous_entry[0][:-4]
         previous = "%s/HISTORY/%s" % (FINAL_DIR, previous_name)
 
         if os.path.isdir(previous):
@@ -564,8 +570,6 @@ def apply_patch(work_dir, hunks, right_src, left_src, base_src, merged_src,
 
     dropped = 0
     for file_hdr, file_name, hunk_hdr, hunk_lines in list(hunks):
-        update_attr(file_name, right_src, left_src, base_src, merged_src)
-
         if file_name.endswith("/ChangeLog"):
             mutate_changelog(hunk_hdr, hunk_lines)
 
@@ -583,14 +587,20 @@ def apply_patch(work_dir, hunks, right_src, left_src, base_src, merged_src,
         if not apply_hunk(work_dir, merged_src, merged_dropped,
                           file_hdr, file_name, hunk_hdr, hunk_lines):
             dropped += 1
+        else:
+            update_attr(file_name, right_src, left_src, base_src, merged_src)
 
     for pot_file in pot_files.keys():
         if not update_pot(pot_file, right_src, left_src, base_src, merged_src):
             dropped += 1
+        else:
+            update_attr(file_name, right_src, left_src, base_src, merged_src)
 
     for po_file in po_files.keys():
         if not update_po(po_file, right_src, left_src, base_src, merged_src):
             dropped += 1
+        else:
+            update_attr(file_name, right_src, left_src, base_src, merged_src)
 
     if dropped:
         print "   - %d patch hunks dropped" % dropped
