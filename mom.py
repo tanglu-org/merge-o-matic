@@ -42,7 +42,7 @@ FINAL_URL = "http://people.ubuntu.com/~scott/ongoing-merge"
 
 # Where we file bugs
 BUGZILLA_URL      = "https://bugzilla.ubuntu.com/"
-BUGZILLA_USERNAME = "scott-bugs@canonical.com"
+BUGZILLA_USERNAME = "scott-bugs@ubuntu.com"
 BUGZILLA_PASSWORD = "mka773624"
 BUGZILLA_PRODUCT  = "Ubuntu"
 
@@ -870,7 +870,7 @@ def add_changelog(package, merged_ver, merged_src):
     print >>new_changelog
     print >>new_changelog, "  * Resynchronise with Debian."
     print >>new_changelog
-    print >>new_changelog, (" -- Scott James Remnant <scott@canonical.com>  " +
+    print >>new_changelog, (" -- Scott James Remnant <scott@ubuntu.com>  " +
             time.strftime("%a, %d %b %Y %H:%M:%S %z"))
     print >>new_changelog
     for line in changelog:
