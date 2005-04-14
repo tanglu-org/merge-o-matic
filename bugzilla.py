@@ -101,6 +101,9 @@ class Session:
                  'form_name' : 'enter_bug'
                  }
 
+        if keywords is not None:
+            form['keywords'] = keywords
+
         if alias is not None:
             form['alias'] = alias
 

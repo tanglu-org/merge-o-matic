@@ -1008,12 +1008,12 @@ def file_bug(package, component):
         try:
             bug_id = bz.submit(BUGZILLA_PRODUCT, package, "unspecified",
                                subject, comment, severity=severity,
-                               alias=alias)
+                               alias=alias, keywords="merge")
             print "   - Created bug %d" % bug_id
         except bugzilla.InvalidComponent:
             bug_id = bz.submit(BUGZILLA_PRODUCT, "UNKNOWN", "unspecified",
                                subject, comment, severity=severity,
-                               alias=alias)
+                               alias=alias, keywords="merge")
             print "   - Created bug %d on UNKNOWN" % bug_id
 
 
