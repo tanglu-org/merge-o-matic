@@ -866,7 +866,8 @@ def add_changelog(package, merged_ver, merged_src):
     changelog = open(changelog_file)
 
     new_changelog = open(changelog_file + ".new", "w")
-    print >>new_changelog, "%s (%s) hoary; urgency=low" % (package, merged_ver)
+    print >>new_changelog, "%s (%s) %s; urgency=low" % (package, merged_ver,
+                                                        UBUNTU_DIST)
     print >>new_changelog
     print >>new_changelog, "  * Resynchronise with Debian."
     print >>new_changelog
