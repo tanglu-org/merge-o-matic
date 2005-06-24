@@ -42,8 +42,8 @@ FINAL_URL = "http://people.ubuntu.com/~scott/ongoing-merge"
 
 # Where we file bugs
 BUGZILLA_URL      = "https://bugzilla.ubuntu.com/"
-BUGZILLA_USERNAME = "scott-bugs@ubuntu.com"
-BUGZILLA_PASSWORD = "mka773624"
+BUGZILLA_USERNAME = "mom@ubuntu.com"
+BUGZILLA_PASSWORD = "1YFNuixv"
 BUGZILLA_PRODUCT  = "Ubuntu"
 
 
