@@ -14,9 +14,12 @@ def main():
     todo.extend(main.items())
     todo.extend(universe.items())
 
+    patches = []
     for package, ubuntu_info in todo:
         try:
-            assay(package, ubuntu_info)
+            patch = assay(package, ubuntu_info)
+            if patch is not None:
+                patches.append((package, patch))
         except Excuse, e:
             print >>sys.stderr, "W:", str(e)
             continue
@@ -26,6 +29,13 @@ def main():
         except Exception, e:
             print >>sys.stderr, "!!", str(e)
             continue
+
+    f = open("%s/PATCHES" % PATCHES_DIR, "w")
+    try:
+        for package, patch in patches:
+            print >>f, "%s %s\n" % (package, patch)
+    finally:
+        f.close()
 
 
 def assay(package, ubuntu_info):
@@ -37,7 +47,7 @@ def assay(package, ubuntu_info):
     ubuntu_ver = version.Version(ubuntu_info["Version"])
     if "ubuntu" not in ubuntu_info["Version"]:
         make_history(package)
-        return
+        return None
 
     # Work out the base version
     find_ver = version.Version(ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")])
@@ -57,6 +67,8 @@ def assay(package, ubuntu_info):
     # Create the patches
     patch_file = create_patch(None, package, base_ver, ubuntu_ver)
     analyse_patch(package, ubuntu_ver, patch_file)
+
+    return patch_file[:len(PATCHES_DIR) + 1]
 
 
 def make_shiny(package):
