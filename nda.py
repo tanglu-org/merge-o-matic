@@ -33,7 +33,7 @@ def main():
     f = open("%s/PATCHES" % PATCHES_DIR, "w")
     try:
         for package, patch in patches:
-            print >>f, "%s %s\n" % (package, patch)
+            print >>f, "%s %s" % (package, patch)
     finally:
         f.close()
 
@@ -68,7 +68,7 @@ def assay(package, ubuntu_info):
     patch_file = create_patch(None, package, base_ver, ubuntu_ver)
     analyse_patch(package, ubuntu_ver, patch_file)
 
-    return patch_file[:len(PATCHES_DIR) + 1]
+    return patch_file[len(PATCHES_DIR) + 1:]
 
 
 def make_shiny(package):
