@@ -24,7 +24,7 @@ DEBIAN_MIRROR   = "http://ftp.uk.debian.org/debian"
 SNAPSHOT_MIRROR = "http://snapshot.debian.net/archive"
 
 # Ubuntu distribution to merge into
-UBUNTU_DIST = "breezy"
+UBUNTU_DIST = "dapper"
 
 # Where do we get our orders?
 JOBLIST_URL = "http://jackass/lorraine/needs-merged.txt"
@@ -79,7 +79,7 @@ def main():
                          final_dir, winning_side)
 
             try:
-                if len(sys.argv) <= 1:
+                if len(sys.argv) <= 1 and component != "universe":
                     file_bug(package, component)
             except Exception, e:
                 print >>sys.stderr, "W: Unable to file bug: %s" % str(e)
