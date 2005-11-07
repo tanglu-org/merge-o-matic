@@ -90,6 +90,9 @@ def main():
         except Problem, e:
             print >>sys.stderr, "E:", str(e)
             continue
+        except:
+            print >>sys.stderr, "X:%s:" % sys.exc_type.__name__, str(sys.exc_value)
+            pass
 
 
 def find_info(package, component, unstable, main, universe):
