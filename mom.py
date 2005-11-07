@@ -82,17 +82,16 @@ def main():
                 if len(sys.argv) <= 1 and component != "universe":
                     file_bug(package, component)
             except Exception, e:
-                print >>sys.stderr, "W: Unable to file bug: %s" % str(e)
+                print "W: Unable to file bug: %s" % str(e)
 
         except Excuse, e:
-            print >>sys.stderr, "W:", str(e)
+            print "W:", str(e)
             continue
         except Problem, e:
-            print >>sys.stderr, "E:", str(e)
+            print "E:", str(e)
             continue
         except:
-            print >>sys.stderr, "X:%s:" % sys.exc_type.__name__, str(sys.exc_value)
-            pass
+            print "X:%s:" % sys.exc_type.__name__, str(sys.exc_value)
 
 
 def find_info(package, component, unstable, main, universe):
@@ -166,7 +165,7 @@ def update_sources(mirror, dist, component):
     url = "%s/dists/%s/%s/source/Sources.gz" % (mirror, dist, component)
 
     print " * Downloading %s" % url
-    urllib.urlretrieve(url, filename)
+    urllib.URLopener().retrieve(url, filename)
 
     return filename
 
@@ -201,7 +200,7 @@ def update_snapshot_sources(mirror, package):
     url = "%s/source/Sources.gz" % pool_url(SNAPSHOT_MIRROR, package)
 
     print " * Downloading %s" % url
-    urllib.urlretrieve(url, filename)
+    urllib.URLopener().retrieve(url, filename)
 
     return filename
 
@@ -237,7 +236,7 @@ def update_joblist():
     url = JOBLIST_URL
 
     print " * Downloading %s" % url
-    urllib.urlretrieve(url, filename)
+    urllib.URLopener().retrieve(url, filename)
 
     return filename
 
@@ -340,7 +339,7 @@ def download_source(mirror, info):
 
         url = "%s/%s/%s" % (mirror, info["Directory"], name)
         print " * Downloading %s" % url
-        urllib.urlretrieve(url, output)
+        urllib.URLopener().retrieve(url, output)
 
     if "_dsc_file" not in info:
         raise Problem, "Unable to download package: %s: no dsc file" % info["Package"]
@@ -411,7 +410,7 @@ def create_debdiff(name, package, base, diff):
         try:
             shell.run(cmd, stdout=output, stderr=sys.stdout)
         except shell.ProcessError, e:
-            print >>sys.stderr, "W: Unable to create debdiff file: %s_%s.debdiff (%s -> %s)" \
+            print "W: Unable to create debdiff file: %s_%s.debdiff (%s -> %s)" \
                   % (package, name, base, diff)
     finally:
         output.close()
