@@ -19,15 +19,23 @@ from util import compress, shell, tree
 
 
 # Location of Ubuntu and Debian mirrors to use
-UBUNTU_MIRROR   = "http://archive.ubuntu.com/ubuntu"
-DEBIAN_MIRROR   = "http://ftp.uk.debian.org/debian"
-SNAPSHOT_MIRROR = "http://snapshot.debian.net/archive"
+UBUNTU_MIRROR = "http://archive.ubuntu.com/ubuntu"
+DEBIAN_MIRROR = "http://ftp.uk.debian.org/debian"
 
 # Ubuntu distribution to merge into
 UBUNTU_DIST = "dapper"
 
 # Where do we get our orders?
 JOBLIST_URL = "http://jackass/lorraine/needs-merged.txt"
+
+# Where we can find older Debian versions?
+OLD_SOURCES = (
+    ( "testing",    DEBIAN_MIRROR,                            "testing", ),
+    ( "stable",     DEBIAN_MIRROR,                            "stable", ),
+    ( "oldstable",  DEBIAN_MIRROR,                            "oldstable", ),
+    ( "morgue",     "http://syncproxy.wna.debian.org/morgue", "morgue", ),
+    ( "old-morgue", "http://keyring.debian.org/morgue",       "morgue", ),
+    )
 
 # Places to put things
 CACHE_DIR   = "cache"
@@ -56,6 +64,14 @@ def main():
     main = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "main")
     universe = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "universe")
 
+    old_sources = []
+    for name, mirror, dist in OLD_SOURCES:
+        try:
+            old_sources.append((name, mirror,
+                                get_sources_list(mirror, dist, "main")))
+        except IOError:
+            print "   - Failed"
+
     jobs = get_joblist()
     for package, component in jobs:
         try:
@@ -63,12 +79,14 @@ def main():
             print " * Processing %s" % package
 
             (debian_info, debian_ver, ubuntu_info, ubuntu_ver,
-             base_info, base_ver) = find_info(package, component, unstable, main, universe)
+             base_mirror, base_info, base_ver) \
+            		= find_info(package, component, unstable, old_sources,
+                                    main, universe)
 
             (debian_dsc, debian_patch, ubuntu_dsc, ubuntu_patch,
              base_dsc, final_dir) = prepare(package, debian_info, debian_ver,
                                             ubuntu_info, ubuntu_ver,
-                                            base_info, base_ver)
+                                            base_mirror, base_info, base_ver)
 
             (merged_ver, merged_dsc, merged_patch, winning_side) \
                          = merge(package, debian_ver, debian_dsc, debian_patch,
@@ -94,7 +112,7 @@ def main():
             print "X:%s:" % sys.exc_type.__name__, str(sys.exc_value)
 
 
-def find_info(package, component, unstable, main, universe):
+def find_info(package, component, unstable, old_sources, main, universe):
     """Find the information for a particular package."""
 
     # Find the package information in unstable
@@ -120,38 +138,39 @@ def find_info(package, component, unstable, main, universe):
     ubuntu_ver = version.Version(ubuntu_info["Version"])
     print "   - %s: %s" % (component, ubuntu_ver)
 
-    # Figure out and find the base version using snapshot.debian.net
+    # Figure out the base version we'd prefer
     if "ubuntu" not in ubuntu_info["Version"]:
         raise Problem, "Package has no ubuntu version component: %s (%s)" % (package, ubuntu_ver)
-
     find_ver = version.Version(ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")])
-    (base_info, base_ver) = find_snapshot(package, find_ver)
-    if base_info is None:
-        raise Problem, "Package base version not found: %s (%s)" % (package, find_ver)
-
-    # Sanity check base version
-    print "   - base: %s" % base_ver
-    if base_ver == debian_ver:
-        raise Excuse, "Debian hasn't moved from base, skipping: %s (%s = %s)" % (package, base_ver, debian_ver)
-    elif base_ver > debian_ver:
-        raise Excuse, "Debian behind our base version, skipping: %s (%s > %s)" % (package, base_ver, debian_ver)
-    elif base_ver > ubuntu_ver:
-        raise Excuse, "Ubuntu behind the base version (huh?), skipping: %s (%s > %s)" % (package, base_ver, ubuntu_ver)
+    if find_ver == debian_ver:
+        raise Excuse, "Debian hasn't moved from base, skipping: %s (%s = %s)" % (package, find_ver, debian_ver)
+    elif find_ver > debian_ver:
+        raise Excuse, "Debian behind our base version, skipping: %s (%s > %s)" % (package, find_ver, debian_ver)
+    elif find_ver > ubuntu_ver:
+        raise Excuse, "Ubuntu behind the base version (huh?), skipping: %s (%s > %s)" % (package, find_ver, ubuntu_ver)
     elif ubuntu_ver > debian_ver:
         raise Excuse, "Ubuntu ran ahead of Debian, skipping: %s (%s > %s)" % (package, ubuntu_ver, debian_ver)
 
+    # Look through the old_sources and find the nearest
+    (base_mirror, base_info, base_ver) = find_base(old_sources, package,
+                                                   find_ver)
+
     return (debian_info, debian_ver, ubuntu_info, ubuntu_ver,
-            base_info, base_ver)
+            base_mirror, base_info, base_ver)
 
 
-def get_sources(mirror, dist, component):
-    """Return a dictionary of source package to information."""
+def get_sources_list(mirror, dist, component):
+    """Return a sources list as a ControlFile object."""
     filename = update_sources(mirror, dist, component)
     gzfile = gzip.open(filename)
     try:
-        sources = controlfile.ControlFile(fileobj=gzfile, multi_para=True)
+        return controlfile.ControlFile(fileobj=gzfile, multi_para=True)
     finally:
         gzfile.close()
+
+def get_sources(mirror, dist, component):
+    """Return a dictionary of source package to information."""
+    sources = get_sources_list(mirror, dist, component)
 
     result = {}
     for para in sources.paras:
@@ -169,40 +188,31 @@ def update_sources(mirror, dist, component):
 
     return filename
 
-def find_snapshot(package, find_version):
-    """Find an old version of a package on snapshot.debian.net."""
-    filename = update_snapshot_sources(SNAPSHOT_MIRROR, package)
-    gzfile = gzip.open(filename)
-    try:
-        sources = controlfile.ControlFile(fileobj=gzfile, multi_para=True)
-    finally:
-        gzfile.close()
+def find_base(old_sources, package, find_ver):
+    """Find the specified base version or nearest we can."""
+    (nearest_name, nearest_mirror, nearest_info, nearest_ver) \
+                   = (None, None, None, None)
+    for name, mirror, sources in old_sources:
+        for para in sources.paras:
+            if para["Package"] != package:
+                continue
 
-    nearest_para = None
-    nearest_version = None
-    for para in sources.paras:
-        if para["Package"] != package:
-            continue
+            para_ver = version.Version(para["Version"])
+            print "   - %s: %s" % (name, para_ver)
 
-        para_version = version.Version(para["Version"])
-        if para_version == find_version:
-            return (para, find_version)
-        elif para_version < find_version \
-             and (nearest_version is None or nearest_version < para_version):
-            nearest_para = para
-            nearest_version = para_version
-    else:
-        return (nearest_para, nearest_version)
+            if para_ver == find_ver:
+                print "   * Selected %s as base" % name
+                return (mirror, para, para_ver)
+            elif para_ver < find_ver \
+                     and (nearest_ver is None or nearest_ver < para_ver):
+                (nearest_name, nearest_mirror, nearest_info, nearest_ver) \
+                               = (name, mirror, para, para_ver)
 
-def update_snapshot_sources(mirror, package):
-    """Update the local Sources cache of package snapshots."""
-    filename = "%s/snapshot-%s.sources.gz" % (CACHE_DIR, package)
-    url = "%s/source/Sources.gz" % pool_url(SNAPSHOT_MIRROR, package)
+    if nearest_ver is None:
+        raise Problem, ("Package base version not found: %s (%s)"
+                        % (package, find_ver))
 
-    print " * Downloading %s" % url
-    urllib.URLopener().retrieve(url, filename)
-
-    return filename
+    return (nearest_mirror, nearest_info, nearest_ver)
 
 def pool_url(mirror, package):
     """Return a URL into the pool."""
@@ -242,14 +252,14 @@ def update_joblist():
 
 
 def prepare(package, debian_info, debian_ver, ubuntu_info, ubuntu_ver,
-            base_info, base_ver):
+            base_mirror, base_info, base_ver):
     """Prepare the package for patching."""
 
     # Download the sources
     changed = False
     changed |= download_source(DEBIAN_MIRROR, debian_info)
     changed |= download_source(UBUNTU_MIRROR, ubuntu_info)
-    changed |= download_source(SNAPSHOT_MIRROR, base_info)
+    changed |= download_source(base_mirror, base_info)
 
     if not changed:
         raise Excuse, "Not changed since last run: %s" % package
