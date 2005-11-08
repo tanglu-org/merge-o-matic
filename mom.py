@@ -10,6 +10,7 @@ import gzip
 import time
 import shutil
 import urllib
+import traceback
 
 from sets import Set
 
@@ -55,6 +56,13 @@ BUGZILLA_PASSWORD = "1YFNuixv"
 BUGZILLA_PRODUCT  = "Ubuntu"
 
 
+# Options
+file_bugs = True
+download_lists = False
+force = False
+args = None
+
+
 class Problem(Exception): pass
 class Excuse(Exception): pass
 
@@ -97,10 +105,16 @@ def main():
                          final_dir, winning_side)
 
             try:
-                if len(sys.argv) <= 1 and component != "universe":
+                if file_bugs and component != "universe":
                     file_bug(package, component)
-            except Exception, e:
-                print "W: Unable to file bug: %s" % str(e)
+            except:
+                print "W: Unable to file bug"
+                print traceback.format_exc()
+
+        except KeyboardInterrupt:
+            raise
+        except SystemExit:
+            raise
 
         except Excuse, e:
             print "W:", str(e)
@@ -109,7 +123,7 @@ def main():
             print "E:", str(e)
             continue
         except:
-            print "X:%s:" % sys.exc_type.__name__, str(sys.exc_value)
+            print traceback.format_exc()
 
 
 def find_info(package, component, unstable, old_sources, main, universe):
@@ -141,7 +155,12 @@ def find_info(package, component, unstable, old_sources, main, universe):
     # Figure out the base version we'd prefer
     if "ubuntu" not in ubuntu_info["Version"]:
         raise Problem, "Package has no ubuntu version component: %s (%s)" % (package, ubuntu_ver)
-    find_ver = version.Version(ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")])
+    find_str = ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")]
+    if find_str.endswith("-"):
+        find_str += "0"
+    find_ver = version.Version(find_str)
+
+    # Sanity check
     if find_ver == debian_ver:
         raise Excuse, "Debian hasn't moved from base, skipping: %s (%s = %s)" % (package, find_ver, debian_ver)
     elif find_ver > debian_ver:
@@ -180,11 +199,15 @@ def get_sources(mirror, dist, component):
 
 def update_sources(mirror, dist, component):
     """Update the local Sources cache."""
+    if not os.path.isdir(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
+
     filename = "%s/%s-%s.sources.gz" % (CACHE_DIR, dist, component)
     url = "%s/dists/%s/%s/source/Sources.gz" % (mirror, dist, component)
 
-    print " * Downloading %s" % url
-    urllib.URLopener().retrieve(url, filename)
+    if download_lists:
+        print " * Downloading %s" % url
+        urllib.URLopener().retrieve(url, filename)
 
     return filename
 
@@ -226,8 +249,8 @@ def pool_url(mirror, package):
 
 def get_joblist():
     """Return (package, component) for each job."""
-    if len(sys.argv) > 1 and sys.argv[1][0] != '-':
-        return zip(sys.argv[1::2], sys.argv[2::2])
+    if args:
+        return zip(args[::2], args[1::2])
 
     result = []
     filename = update_joblist()
@@ -242,11 +265,15 @@ def get_joblist():
 
 def update_joblist():
     """Update the local job list cache."""
+    if not os.path.isdir(CACHE_DIR):
+        os.makedirs(CACHE_DIR)
+
     filename = "%s/needs-merged.txt" % CACHE_DIR
     url = JOBLIST_URL
 
-    print " * Downloading %s" % url
-    urllib.URLopener().retrieve(url, filename)
+    if download_lists:
+        print " * Downloading %s" % url
+        urllib.URLopener().retrieve(url, filename)
 
     return filename
 
@@ -261,7 +288,7 @@ def prepare(package, debian_info, debian_ver, ubuntu_info, ubuntu_ver,
     changed |= download_source(UBUNTU_MIRROR, ubuntu_info)
     changed |= download_source(base_mirror, base_info)
 
-    if not changed:
+    if not changed and not force:
         raise Excuse, "Not changed since last run: %s" % package
 
     debian_dsc = debian_info["_dsc_file"]
@@ -282,6 +309,9 @@ def prepare(package, debian_info, debian_ver, ubuntu_info, ubuntu_ver,
 def unpack_source(dsc_file):
     """Unpack package source, return False if already unpacked."""
     files_dir = os.path.dirname(dsc_file)
+
+    if not os.path.isdir(SOURCES_DIR):
+        os.makedirs(SOURCES_DIR)
 
     s = source.SourceControl(dsc_file)
     dest = "%s/%s_%s" % (SOURCES_DIR, s.source, s.version)
@@ -334,6 +364,9 @@ def unpack_source(dsc_file):
 
 def download_source(mirror, info):
     """Download sources of package, return False if already downloaded."""
+    if not os.path.isdir(FILES_DIR):
+        os.makedirs(FILES_DIR)
+
     files = info["Files"].strip("\n").split("\n")
     for file in files:
         (md5sum, size, name) = file.split(None, 2)
@@ -359,6 +392,9 @@ def download_source(mirror, info):
 
 def create_final_dir(package):
     """Create the final resting place, or clear it out."""
+    if not os.path.isdir(FINAL_DIR):
+        os.makedirs(FINAL_DIR)
+
     final_dir = "%s/%s" % (FINAL_DIR, package)
     if os.path.isdir(final_dir):
         entries = os.listdir(final_dir)
@@ -386,8 +422,14 @@ def create_final_dir(package):
 def create_patch(name, package, base, diff):
     """Create patches between two unpacked sources."""
     if name is not None:
+        if not os.path.isdir(FINAL_DIR):
+            os.makedirs(FINAL_DIR)
+
         filename = "%s/%s/%s_%s.patch" % (FINAL_DIR, package, package, name)
     else:
+        if not os.path.isdir(PATCHES_DIR):
+            os.makedirs(PATCHES_DIR)
+
         filename = "%s/%s/%s_%s.patch" % (PATCHES_DIR, package, package, diff)
     base_dir = "%s_%s" % (package, base)
     diff_dir = "%s_%s" % (package, diff)
@@ -410,8 +452,10 @@ def create_patch(name, package, base, diff):
 
 def create_debdiff(name, package, base, diff):
     """Create debdiff between two sets of files."""
-    filename = "%s/%s/%s_%s.debdiff" % (FINAL_DIR, package, package, name)
+    if not os.path.isdir(FINAL_DIR):
+        os.makedirs(FINAL_DIR)
 
+    filename = "%s/%s/%s_%s.debdiff" % (FINAL_DIR, package, package, name)
     print " * Creating %s_%s.debdiff (%s -> %s)" % (package, name, base, diff)
 
     output = open(filename, "w")
@@ -432,6 +476,9 @@ def merge(package, debian_ver, debian_dsc, debian_patch,
           ubuntu_ver, ubuntu_dsc, ubuntu_patch, base_ver, base_dsc, final_dir):
     """Perform the merge and create a new source package."""
     merged_ver = version.Version(str(debian_ver) + "ubuntu1")
+
+    if not os.path.isdir(WORK_DIR):
+        os.makedirs(WORK_DIR)
 
     work_dir = os.path.abspath("%s/%s_%s" % (WORK_DIR, package, merged_ver))
     os.mkdir(work_dir)
@@ -520,10 +567,12 @@ def read_patch(patch_file):
             file_hdr = []
             file_hdr.append(line)
 
-        elif line.startswith("--- "):
+        elif line.startswith("--- ") \
+                 and len(file_hdr) and file_hdr[-1].startswith("diff "):
             file_hdr.append(line)
 
-        elif line.startswith("+++ "):
+        elif line.startswith("+++ ") \
+                 and len(file_hdr) and file_hdr[-1].startswith("--- "):
             file_hdr.append(line)
             file_name = line[4:]
             if "\t" in file_name:
@@ -1105,6 +1154,9 @@ def analyse_hunk_lines(hunk_lines):
 
 def write_analysed_patches(package, version, output):
     """Write result of analysing patches."""
+    if not os.path.isdir(PATCHES_DIR):
+        os.makedirs(PATCHES_DIR)
+
     patch_dir = "%s/%s" % (PATCHES_DIR, package)
 
     categories = output.keys()
@@ -1132,4 +1184,33 @@ def write_patch(patch_file, hunks):
 
 
 if __name__ == "__main__":
+    args = sys.argv[1:]
+    while args:
+        if args[0] == "--help":
+            print "Usage: mom OPTION... (PACKAGE SECTION)..."
+            print
+            print "Options:"
+            print "  --help          Show this message"
+            print "  --force         Always process merges"
+            print "  --nodownload    Don't download package lists"
+            print "  --nobugs        Don't file bugs"
+            sys.exit(0)
+        elif args[0] == "--nodownload":
+            download_lists = False
+            args.pop(0)
+        elif args[0] == "--nobugs":
+            file_bugs = False
+            args.pop(0)
+        elif args[0] == "--force":
+            force = True
+            args.pop(0)
+        elif args[0] == "--":
+            args.pop(0)
+            break
+        elif args[0].startswith("--"):
+            print "Unknown option: %s" % args[0]
+            sys.exit(1)
+        else:
+            break
+
     main()
