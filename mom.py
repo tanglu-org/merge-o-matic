@@ -68,15 +68,15 @@ class Excuse(Exception): pass
 
 
 def main():
-    unstable = get_sources(DEBIAN_MIRROR, "unstable", "main")
-    main = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "main")
-    universe = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "universe")
+    unstable = get_sources("debian", DEBIAN_MIRROR, "unstable", "main")
+    main = get_sources("ubuntu", UBUNTU_MIRROR, UBUNTU_DIST, "main")
+    universe = get_sources("ubuntu", UBUNTU_MIRROR, UBUNTU_DIST, "universe")
 
     old_sources = []
     for name, mirror, dist in OLD_SOURCES:
         try:
             old_sources.append((name, mirror,
-                                get_sources_list(mirror, dist, "main")))
+                                get_sources_list(name, mirror, dist, "main")))
         except IOError:
             print "   - Failed"
 
@@ -178,18 +178,18 @@ def find_info(package, component, unstable, old_sources, main, universe):
             base_mirror, base_info, base_ver)
 
 
-def get_sources_list(mirror, dist, component):
+def get_sources_list(name, mirror, dist, component):
     """Return a sources list as a ControlFile object."""
-    filename = update_sources(mirror, dist, component)
+    filename = update_sources(name, mirror, dist, component)
     gzfile = gzip.open(filename)
     try:
         return controlfile.ControlFile(fileobj=gzfile, multi_para=True)
     finally:
         gzfile.close()
 
-def get_sources(mirror, dist, component):
+def get_sources(name, mirror, dist, component):
     """Return a dictionary of source package to information."""
-    sources = get_sources_list(mirror, dist, component)
+    sources = get_sources_list(name, mirror, dist, component)
 
     result = {}
     for para in sources.paras:
@@ -197,12 +197,12 @@ def get_sources(mirror, dist, component):
 
     return result
 
-def update_sources(mirror, dist, component):
+def update_sources(name, mirror, dist, component):
     """Update the local Sources cache."""
     if not os.path.isdir(CACHE_DIR):
         os.makedirs(CACHE_DIR)
 
-    filename = "%s/%s-%s.sources.gz" % (CACHE_DIR, dist, component)
+    filename = "%s/%s-%s-%s.sources.gz" % (CACHE_DIR, name, dist, component)
     url = "%s/dists/%s/%s/source/Sources.gz" % (mirror, dist, component)
 
     if download_lists:
