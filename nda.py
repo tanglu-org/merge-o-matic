@@ -9,8 +9,8 @@ from mom import *
 mom.download_lists = False
 
 def main():
-    main = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "main")
-    universe = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "universe")
+    main = get_sources("ubuntu", UBUNTU_MIRROR, UBUNTU_DIST, "main")
+    universe = get_sources("ubuntu", UBUNTU_MIRROR, UBUNTU_DIST, "universe")
 
     todo = []
     todo.extend(main.items())
