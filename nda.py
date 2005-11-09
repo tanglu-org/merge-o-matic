@@ -14,21 +14,33 @@ def main():
     todo.extend(main.items())
     todo.extend(universe.items())
 
+    old_sources = []
+    for name, mirror, dist in OLD_SOURCES:
+        try:
+            old_sources.append((name, mirror,
+                                get_sources_list(name, mirror, dist, "main")))
+        except IOError:
+            print "   - Failed"
+
     patches = []
     for package, ubuntu_info in todo:
         try:
-            patch = assay(package, ubuntu_info)
+            patch = assay(package, old_sources, ubuntu_info)
             if patch is not None:
                 patches.append((package, patch))
+        except KeyboardInterrupt:
+            raise
+        except SystemExit:
+            raise
+
         except Excuse, e:
-            print >>sys.stderr, "W:", str(e)
+            print "W:", str(e)
             continue
         except Problem, e:
-            print >>sys.stderr, "E:", str(e)
+            print "E:", str(e)
             continue
-        except Exception, e:
-            print >>sys.stderr, "!!", str(e)
-            continue
+        except:
+            print traceback.format_exc()
 
     f = open("%s/PATCHES" % PATCHES_DIR, "w")
     try:
@@ -38,7 +50,7 @@ def main():
         f.close()
 
 
-def assay(package, ubuntu_info):
+def assay(package, old_sources, ubuntu_info):
     """Compare the differences between a Debian and Ubuntu package."""
     print
     print " * Processing %s" % package
@@ -50,14 +62,20 @@ def assay(package, ubuntu_info):
         return None
 
     # Work out the base version
-    find_ver = version.Version(ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")])
-    (base_info, base_ver) = find_snapshot(package, find_ver)
-    if base_info is None:
-        raise Problem, "Package base version not found: %s (%s)" % (package, find_ver)
+    if "ubuntu" not in ubuntu_info["Version"]:
+        raise Problem, "Package has no ubuntu version component: %s (%s)" % (package, ubuntu_ver)
+    find_str = ubuntu_info["Version"][:ubuntu_info["Version"].index("ubuntu")]
+    if find_str.endswith("-"):
+        find_str += "0"
+    find_ver = version.Version(find_str)
+
+    # Look through the old_sources and find the nearest
+    (base_mirror, base_info, base_ver) = find_base(old_sources, package,
+                                                   find_ver)
 
     # Download the sources
     download_source(UBUNTU_MIRROR, ubuntu_info)
-    download_source(SNAPSHOT_MIRROR, base_info)
+    download_source(base_mirror, base_info)
 
     patch_dir = make_shiny(package)
 
