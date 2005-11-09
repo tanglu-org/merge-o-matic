@@ -3,8 +3,10 @@
 #
 # Nightly Difference Analysis
 
+import mom
 from mom import *
 
+mom.download_lists = False
 
 def main():
     main = get_sources(UBUNTU_MIRROR, UBUNTU_DIST, "main")
