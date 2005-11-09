@@ -58,7 +58,7 @@ BUGZILLA_PRODUCT  = "Ubuntu"
 
 # Options
 file_bugs = True
-download_lists = False
+download_lists = True
 force = False
 args = None
 
