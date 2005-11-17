@@ -700,6 +700,8 @@ def apply_hunk(work_dir, merged_src, merged_dropped, file_hdr, file_name,
                     patch_worked = False
                 elif "No file to patch." in line:
                     patch_worked = False
+                elif "which already exists!" in line:
+                    patch_worked = False
         finally:
             out.close()
 
@@ -928,7 +930,7 @@ def add_changelog(package, merged_ver, merged_src):
 
     new_changelog = open(changelog_file + ".new", "w")
     print >>new_changelog, ("%s-MERGE (%s) %s; urgency=low"
-                            % package, merged_ver, UBUNTU_DIST)
+                            % (package, merged_ver, UBUNTU_DIST))
     print >>new_changelog
     print >>new_changelog, "  * Resynchronise with Debian."
     print >>new_changelog
