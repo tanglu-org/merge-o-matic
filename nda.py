@@ -12,10 +12,6 @@ def main():
     main = get_sources("ubuntu", UBUNTU_MIRROR, UBUNTU_DIST, "main")
     universe = get_sources("ubuntu", UBUNTU_MIRROR, UBUNTU_DIST, "universe")
 
-    todo = []
-    todo.extend(main.items())
-    todo.extend(universe.items())
-
     old_sources = []
     for name, mirror, dist in OLD_SOURCES:
         try:
@@ -23,6 +19,25 @@ def main():
                                 get_sources_list(name, mirror, dist, "main")))
         except IOError:
             print "   - Failed"
+
+    todo = []
+    if mom.args:
+        for package, component in zip(mom.args[::2], mom.args[1::2]):
+            if component == "main":
+                ubuntu = main
+            elif component == "universe":
+                ubuntu = universe
+            else:
+                print "E: Package in unknown component: %s (%s)" % (package, component)
+                continue
+
+            if package not in ubuntu:
+                print "E: Package not in %s: %s" % (component, package)
+
+            todo.append((package, ubuntu[package]))
+    else:
+        todo.extend(main.items())
+        todo.extend(universe.items())
 
     patches = []
     for package, ubuntu_info in todo:
@@ -116,5 +131,26 @@ def make_history(package):
 
 
 if __name__ == "__main__":
-    main()
+    mom.args = sys.argv[1:]
+    while mom.args:
+        if mom.args[0] == "--help":
+            print "Usage: nda OPTION... (PACKAGE SECTION)..."
+            print
+            print "Options:"
+            print "  --help          Show this message"
+            print "  --force         Always process merges"
+            print "  --download      Download package lists again"
+            sys.exit(0)
+        elif mom.args[0] == "--download":
+            mom.download_lists = True
+            mom.args.pop(0)
+        elif mom.args[0] == "--":
+            mom.args.pop(0)
+            break
+        elif mom.args[0].startswith("--"):
+            print "Unknown option: %s" % mom.args[0]
+            sys.exit(1)
+        else:
+            break
 
+    main()
