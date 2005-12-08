@@ -1069,10 +1069,13 @@ def file_bug(package, component):
         else:
             severity = "enhancement"
 
+        priority = "P5"
+
         try:
             bug_id = bz.submit(BUGZILLA_PRODUCT, package, "unspecified",
                                subject, comment, severity=severity,
-                               alias=alias, keywords="merge")
+                               priority=priority, alias=alias,
+                               keywords="merge")
             print "   - Created bug %d" % bug_id
         except bugzilla.InvalidComponent:
             bug_id = bz.submit(BUGZILLA_PRODUCT, "UNKNOWN", "unspecified",
