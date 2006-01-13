@@ -12,9 +12,10 @@ import shutil
 import urllib
 import traceback
 
+import bugsy
+
 from sets import Set
 
-import bugzilla
 from deb import controlfile, source, version
 from util import compress, shell, tree
 
@@ -50,10 +51,11 @@ PATCHES_DIR = "public_html/patches"
 FINAL_URL = "http://people.ubuntu.com/~scott/ongoing-merge"
 
 # Where we file bugs
-BUGZILLA_URL      = "https://bugzilla.ubuntu.com/"
-BUGZILLA_USERNAME = "mom@ubuntu.com"
-BUGZILLA_PASSWORD = "1YFNuixv"
-BUGZILLA_PRODUCT  = "Ubuntu"
+LAUNCHPAD_URL      = "https://launchpad.net/"
+LAUNCHPAD_EMAIL    = "mom@ubuntu.com"
+LAUNCHPAD_USERNAME = "mom-ubuntu"
+LAUNCHPAD_PASSWORD = "1YFNuixv"
+LAUNCHPAD_DISTRO   = "ubuntu"
 
 
 # Options
@@ -61,6 +63,9 @@ file_bugs = True
 download_lists = True
 force = False
 args = None
+
+# Use a single Launchpad session
+malone = None
 
 
 class Problem(Exception): pass
@@ -1027,14 +1032,12 @@ def write_report(package, debian_ver, ubuntu_ver, base_ver, merged_ver,
 
 def file_bug(package, component):
     """File a bug, so our hard work doesn't go to waste."""
-    bzweb = bugzilla.WebInterface(BUGZILLA_URL)
-    bz = bzweb.login(BUGZILLA_USERNAME, BUGZILLA_PASSWORD)
+    global malone
+    if malone is None:
+        malone = bugsy.WebInterface(LAUNCHPAD_URL).newSession()
+        malone.login(LAUNCHPAD_EMAIL, LAUNCHPAD_PASSWORD)
 
-    if len(package) > 14:
-        alias = "merge-%s-%s" % (package[:9], package[-4:])
-    else:
-        alias = "merge-%s" % package
-    subject = "%s: new changes from Debian require merging" % package
+    subject = "New changes from Debian require merging"
 
     comment  = "New changes from Debian require merging into Ubuntu.\n\n"
     comment += "Some, if not all, of this work has been done automatically;\n"
@@ -1049,39 +1052,21 @@ def file_bug(package, component):
     comment += "        %s/README\n\n" % FINAL_URL
     comment += " -- Your friendly neighbourhood Merge-O-Matic.\n"
 
+    nag_subject = "Further changes"
+
     nag_msg  = "This is a reminder, further changes have occurred in Debian\n"
     nag_msg += "since this report was filed.  The URL above has been updated\n"
     nag_msg += "with the new source package.\n"
 
-    print " * Filing bug"
-    bug_id = bz.bug_id_from_alias(BUGZILLA_PRODUCT, alias)
-    if bug_id is not None:
-        print "   - Commenting on bug %d" % bug_id
-
-        bz.add_comment(bug_id, nag_msg)
+    # Look for an existing bug
+    for bug in malone.bugs(LAUNCHPAD_DISTRO, package):
+        if bug.reporter == LAUNCHPAD_USERNAME:
+            print " * Commenting on bug %d" % bug.number
+            bug.comment(nag_subject, nag_msg)
+            break
     else:
-        old_bug_id = bz.bug_id_from_alias(BUGZILLA_PRODUCT, alias, all=True)
-        if old_bug_id is not None:
-            bz.clear_alias(old_bug_id)
-
-        if component == "main":
-            severity = "normal"
-        else:
-            severity = "enhancement"
-
-        priority = "P5"
-
-        try:
-            bug_id = bz.submit(BUGZILLA_PRODUCT, package, "unspecified",
-                               subject, comment, severity=severity,
-                               priority=priority, alias=alias,
-                               keywords="merge")
-            print "   - Created bug %d" % bug_id
-        except bugzilla.InvalidComponent:
-            bug_id = bz.submit(BUGZILLA_PRODUCT, "UNKNOWN", "unspecified",
-                               subject, comment, severity=severity,
-                               alias=alias, keywords="merge")
-            print "   - Created bug %d on UNKNOWN" % bug_id
+        bug = malone.fileBug(LAUNCHPAD_DISTRO, package, subject, comment)
+        print " * Filed bug %d" % bug.number
 
 
 def analyse_patch(package, version, patch_file):
