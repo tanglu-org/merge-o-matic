@@ -13,6 +13,10 @@ PRIORITY = [ "unknown", "required", "important", "standard", "optional",
              "extra" ]
 COLOURS =  [ "#ff8080", "#ffb580", "#ffea80", "#dfff80", "#abff80", "#80ff8b" ]
 
+# Sections
+SECTIONS = [ "outstanding", "new", "updated" ]
+
+
 def options(parser):
     parser.add_option("-D", "--source-distro", type="string", metavar="DISTRO",
                       default=SRC_DISTRO,
@@ -38,6 +42,20 @@ def main(options, args):
 
     our_distro = options.dest_distro
     our_dist = options.dest_suite
+
+    outstanding = []
+    if os.path.isfile("%s/outstanding-merges.txt" % ROOT):
+        after_uvf = True
+
+        f = open("%s/outstanding-merges.txt" % ROOT)
+        try:
+            for line in f:
+                outstanding.append(line.strip())
+        finally:
+            f.close()
+    else:
+        after_uvf = False
+        SECTIONS.remove("new")
 
     # For each package in the destination distribution, find out whether
     # there's an open merge, and if so add an entry to the table for it.
@@ -73,7 +91,16 @@ def main(options, args):
                 user = None
                 uploaded = False
 
-            merges.append((uploaded, priority_idx, source["Package"], user,
+            if uploaded:
+                section = "updated"
+            elif not after_uvf:
+                section = "outstanding"
+            elif source["Package"] in outstanding:
+                section = "outstanding"
+            else:
+                section = "new"
+
+            merges.append((section, priority_idx, source["Package"], user,
                            source, base_version, left_version, right_version))
 
         write_status_page(our_component, merges, our_distro, src_distro)
@@ -121,11 +148,10 @@ def write_status_page(component, merges, left_distro, right_distro):
         print >>status, "<img src=\".img/ubuntulogo-100.png\" id=\"ubuntu\">"
         print >>status, "<h1>Ubuntu Merge-o-Matic: %s</h1>" % component
 
-        print >>status, ("<p><a href=\"#outstanding\">%s outstanding merges"
-                         "</a></p>" % len([m for m in merges if not m[0]]))
-
-        print >>status, ("<p><a href=\"#updated\">%s updated merges"
-                         "</a></p>" % len([m for m in merges if m[0]]))
+        for section in SECTIONS:
+            section_merges = [ m for m in merges if m[0] == section ]
+            print >>status, ("<p><a href=\"#%s\">%s %s merges</a></p>"
+                             % (section, len(section_merges), section))
 
         print >>status, "<ul>"
         print >>status, ("<li>If you are not the previous uploader, ask the "
@@ -139,13 +165,13 @@ def write_status_page(component, merges, left_distro, right_distro):
                          "like.</li>")
         print >>status, "</ul>"
 
-        print >>status, "<h2 id=\"outstanding\">Outstanding Merges</h2>"
-        do_table(status, [m for m in merges if not m[0]],
-                 left_distro, right_distro)
+        for section in SECTIONS:
+            section_merges = [ m for m in merges if m[0] == section ]
 
-        print >>status, "<h2 id=\"updated\">Updated Merges</h2>"
-        do_table(status, [m for m in merges if m[0]],
-                 left_distro, right_distro)
+            print >>status, ("<h2 id=\"%s\">%s Merges</h2>"
+                             % (section, section.title()))
+
+            do_table(status, section_merges, left_distro, right_distro)
 
         print >>status, "</body>"
         print >>status, "</html>"
