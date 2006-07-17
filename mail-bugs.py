@@ -59,7 +59,8 @@ def main(options, args):
 
             save_watermark(distro, package, this["Version"])
 
-    mail_closures(bugs)
+    if len(bugs):
+        mail_closures(bugs)
 
 def closed_bugs(distro, this):
     """Obtain a list of closed bugs."""
