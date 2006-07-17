@@ -139,11 +139,15 @@ def changes_file(distro, source):
            % (ROOT, distro, pathhash(source["Package"]),
               source["Package"], source["Package"], source["Version"])
 
+def diff_directory(distro, source):
+    """Return the directory where we can find diffs."""
+    return "%s/diffs/%s/%s/%s" \
+           % (ROOT, distro, pathhash(source["Package"]), source["Package"])
+
 def diff_file(distro, source):
     """Return the location of a local diff file."""
-    return "%s/diffs/%s/%s/%s/%s_%s.patch" \
-           % (ROOT, distro, pathhash(source["Package"]),
-              source["Package"], source["Package"], source["Version"])
+    return "%s/%s_%s.patch" % (diff_directory(distro, source),
+                               source["Package"], source["Version"])
 
 def patch_file(distro, source, slipped=False):
     """Return the location of a local patch file."""

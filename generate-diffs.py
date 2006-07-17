@@ -16,7 +16,7 @@ def options(parser):
                       help="Process only theses packages")
     parser.add_option("-c", "--component", type="string", metavar="COMPONENT",
                       action="append",
-                      help="Process only these destination components")
+                      help="Process only these components")
 
 def main(options, args):
     if len(args):
