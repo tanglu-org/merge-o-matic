@@ -24,7 +24,8 @@ SEVERITY = [ "unknown", "critical", "grave", "serious", "important", "normal",
              "minor", "wishlist" ]
 
 # Who to send to
-RECIPIENTS = [ "ubuntu-archive@lists.ubuntu.com" ]
+RECIPIENTS = [ "ubuntu-archive@lists.ubuntu.com",
+               "ubuntu-devel@lists.ubuntu.com" ]
 
 
 def options(parser):
