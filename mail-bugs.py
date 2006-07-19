@@ -168,6 +168,8 @@ def send_message(message, recipients):
 
     for addr in recipients:
         logging.debug("Sending to %s", addr)
+        message.replace_header("To", addr)
+
         smtp.sendmail("mom@ubuntu.com", addr , message.as_string())
 
     smtp.quit()
