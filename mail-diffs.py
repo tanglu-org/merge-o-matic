@@ -200,15 +200,8 @@ def send_message(message, recipients):
     smtp = SMTP("localhost")
 
     for addr in recipients:
-        if "##" in addr:
-            (env_addr, addr) = addr.split("##")
-        else:
-            env_addr = addr
-
         logging.debug("Sending to %s", addr)
-        message.replace_header("To", addr)
-
-        smtp.sendmail("mom@ubuntu.com", env_addr , message.as_string())
+        smtp.sendmail("mom@ubuntu.com", addr , message.as_string())
 
     smtp.quit()
 
