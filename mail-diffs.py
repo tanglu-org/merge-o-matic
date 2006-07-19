@@ -217,6 +217,9 @@ def read_subscriptions():
         fcntl.flock(f.fileno(), fcntl.LOCK_SH)
 
         for line in f:
+            if line.startswith("#"):
+                continue
+
             (addr, distro, filter) = line.strip().split()
             subscriptions.append((addr, distro, filter))
     finally:
