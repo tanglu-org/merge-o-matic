@@ -11,7 +11,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.Utils import formatdate, make_msgid, parseaddr
 from fnmatch import fnmatch
-from smtplib import SMTP
+from smtplib import SMTP, SMTPSenderRefused
 
 from momlib import *
 from deb.controlfile import ControlFile
@@ -209,7 +209,11 @@ def send_message(message, recipients):
         logging.debug("Sending to %s", addr)
         message.replace_header("To", addr)
 
-        smtp.sendmail("mom@ubuntu.com", env_addr , message.as_string())
+        try:
+            smtp.sendmail("mom@ubuntu.com", env_addr , message.as_string())
+        except SMTPSenderRefused:
+            logging.exception()
+            smtp = SMTP("localhost")
 
     smtp.quit()
 
