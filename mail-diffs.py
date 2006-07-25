@@ -212,7 +212,7 @@ def send_message(message, recipients):
         try:
             smtp.sendmail("mom@ubuntu.com", env_addr , message.as_string())
         except SMTPSenderRefused:
-            logging.exception()
+            logging.exception("smtp failed")
             smtp = SMTP("localhost")
 
     smtp.quit()
