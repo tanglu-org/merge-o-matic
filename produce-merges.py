@@ -50,12 +50,29 @@ def options(parser):
     parser.add_option("-V", "--version", type="string", metavar="VER",
                       help="Version to obtain from destination")
 
+    parser.add_option("-X", "--exclude", type="string", metavar="FILENAME",
+                      action="append",
+                      help="Exclude packages listed in this file")
+    parser.add_option("-I", "--include", type="string", metavar="FILENAME",
+                      action="append",
+                      help="Only process packages listed in this file")
+
 def main(options, args):
     src_distro = options.source_distro
     src_dist = options.source_suite
 
     our_distro = options.dest_distro
     our_dist = options.dest_suite
+
+    excludes = []
+    if options.exclude is not None:
+        for filename in options.exclude:
+            excludes.extend(read_package_list(filename))
+
+    includes = []
+    if options.include is not None:
+        for filename in options.include:
+            includes.extend(read_package_list(filename))
 
     # For each package in the destination distribution, locate the latest in
     # the source distribution; calculate the base from the destination and
@@ -68,6 +85,10 @@ def main(options, args):
         for our_source in get_sources(our_distro, our_dist, our_component):
             if options.package is not None \
                    and our_source["Package"] not in options.package:
+                continue
+            if len(includes) and our_source["Package"] not in includes:
+                continue
+            if len(excludes) and our_source["Package"] in excludes:
                 continue
 
             try:
@@ -917,6 +938,25 @@ def write_report(left_source, left_distro, left_patch, base_source,
               % (left_source["Version"], sa_arg)
     finally:
         report.close()
+
+
+def read_package_list(filename):
+    """Read a list of packages from the given file."""
+    packages = []
+
+    list_file = open(filename)
+    try:
+        for line in list_file:
+            if line.startswith("#"):
+                continue
+
+            package = line.strip()
+            if len(package):
+                packages.append(package)
+    finally:
+        list_file.close()
+
+    return packages
 
 
 if __name__ == "__main__":
