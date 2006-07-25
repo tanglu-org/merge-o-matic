@@ -108,7 +108,8 @@ the Ubuntu version and the equivalent base version in Debian.""")
         payload = patch_part(distro, this)
     elif get_base(last) != get_base(this):
         # Ubuntu changed upstream version, send the patech
-        subject = "Ubuntu patch %s %s" % (this["Package"], this["Version"])
+        subject = "Ubuntu (new upstream) %s %s"\
+                  % (this["Package"], this["Version"])
         intro = MIMEText("""\
 This e-mail has been sent due to an upload to Ubuntu of a new upstream
 version which still contains Ubuntu changes.  It contains the difference
