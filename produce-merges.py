@@ -550,6 +550,20 @@ def merge_file(left_dir, left_name, left_distro, base_dir,
                 logging.debug("binary files are the same: %s", filename)
                 tree.copyfile("%s/%s" % (left_dir, filename),
                               "%s/%s" % (merged_dir, filename))
+            elif same_file(os.stat("%s/%s" % (base_dir, filename)), base_dir,
+                           os.stat("%s/%s" % (left_dir, filename)), left_dir,
+                           filename):
+                logging.debug("preserving binary change in %s: %s",
+                              right_distro, filename)
+                tree.copyfile("%s/%s" % (right_dir, filename),
+                              "%s/%s" % (merged_dir, filename))
+            elif same_file(os.stat("%s/%s" % (base_dir, filename)), base_dir,
+                           os.stat("%s/%s" % (right_dir, filename)), right_dir,
+                           filename):
+                logging.debug("preserving binary change in %s: %s",
+                              left_distro, filename)
+                tree.copyfile("%s/%s" % (left_dir, filename),
+                              "%s/%s" % (merged_dir, filename))
             else:
                 logging.debug("binary file conflict: %s", filename)
                 conflict_file(left_dir, left_distro, right_dir, right_distro,
