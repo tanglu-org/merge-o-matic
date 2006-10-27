@@ -21,7 +21,7 @@ ROOT = "/srv/patches.ubuntu.com"
 DISTROS = {
     "ubuntu": {
         "mirror": "http://archive.ubuntu.com/ubuntu",
-        "dists": [ "edgy" ],
+        "dists": [ "feisty" ],
         "components": [ "main", "restricted", "universe", "multiverse" ],
         },
     "debian": {
@@ -33,7 +33,7 @@ DISTROS = {
 
 # Destination distribution and release
 OUR_DISTRO = "ubuntu"
-OUR_DIST   = "edgy"
+OUR_DIST   = "feisty"
 
 # Default source distrbution and release
 SRC_DISTRO = "debian"
