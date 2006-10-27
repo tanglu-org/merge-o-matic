@@ -90,7 +90,7 @@ def main(options, args):
                                       multi_para=False, signed=False).para
 
                 user = changes["Changed-By"]
-                uploaded = changes["Distribution"] == "edgy"
+                uploaded = changes["Distribution"] == OUR_DIST
             else:
                 user = None
                 uploaded = False
