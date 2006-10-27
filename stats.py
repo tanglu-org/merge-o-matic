@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 #
-# output difference stats
+# collect difference stats
 
 import os
 import time
@@ -109,5 +109,5 @@ def write_stats(component, stats):
 
 if __name__ == "__main__":
     run(main, options, usage="%prog",
-        description="output difference stats")
+        description="collect difference stats")
 
