@@ -173,6 +173,11 @@ def write_status_page(component, merges, left_distro, right_distro):
 
             do_table(status, section_merges, left_distro, right_distro)
 
+        print >>status, "<h2 id=stats>Statistics</h2>"
+        print >>status, ("<img src=\"%s-now.png\" title=\"Current stats\">"
+                         % component)
+        print >>status, ("<img src=\"%s-trend.png\" title=\"Six month trend\">"
+                         % component)
         print >>status, "</body>"
         print >>status, "</html>"
     finally:

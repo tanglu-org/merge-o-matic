@@ -110,4 +110,3 @@ def write_stats(component, stats):
 if __name__ == "__main__":
     run(main, options, usage="%prog",
         description="collect difference stats")
-
