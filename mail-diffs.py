@@ -11,7 +11,7 @@ from email.MIMEMultipart import MIMEMultipart
 from email.MIMEText import MIMEText
 from email.Utils import formatdate, make_msgid, parseaddr
 from fnmatch import fnmatch
-from smtplib import SMTP, SMTPSenderRefused
+from smtplib import SMTP, SMTPSenderRefused, SMTPDataError
 
 from momlib import *
 from deb.controlfile import ControlFile
