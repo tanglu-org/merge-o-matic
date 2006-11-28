@@ -456,3 +456,32 @@ def read_report(output_dir, left_distro, right_distro):
         raise AttributeError, "Insufficient detail in report"
 
     return (base_version, left_version, right_version)
+
+# --------------------------------------------------------------------------- #
+# Blacklist handling
+# --------------------------------------------------------------------------- #
+
+def read_blacklist():
+    """Read the blacklist file."""
+    filename = "%s/sync-blacklist.txt"
+    if not os.path.isfile(filename):
+        return []
+
+    bl = []
+    blacklist = open(filename)
+    try:
+        for line in blacklist:
+            try:
+                line = line[:line.index("#")]
+            except ValueError:
+                pass
+
+            line = line.strip()
+            if not line:
+                continue
+
+            bl.append(line)
+    finally:
+        blacklist.close()
+
+    return bl
