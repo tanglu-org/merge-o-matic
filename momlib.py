@@ -463,7 +463,7 @@ def read_report(output_dir, left_distro, right_distro):
 
 def read_blacklist():
     """Read the blacklist file."""
-    filename = "%s/sync-blacklist.txt"
+    filename = "%s/sync-blacklist.txt" % ROOT
     if not os.path.isfile(filename):
         return []
 
