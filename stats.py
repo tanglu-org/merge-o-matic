@@ -40,6 +40,8 @@ def main(options, args):
     our_distro = options.dest_distro
     our_dist = options.dest_suite
 
+    blacklist = read_blacklist()
+
     # For each package in the destination distribution, locate the latest in
     # the source distribution; calculate the base from the destination
     for our_component in DISTROS[our_distro]["components"]:
@@ -66,6 +68,11 @@ def main(options, args):
             logging.debug("%s: %s is %s", package, our_distro, our_version)
 
             stats["total"] += 1
+
+            if package in blacklist:
+                logging.debug("%s: blacklisted (locally packaged)", package)
+                stats["local"] += 1
+                continue
 
             try:
                 (src_source, src_version, src_pool_source) \
