@@ -22,6 +22,8 @@ def main(options, args):
     distro = options.distro
     dist = options.suite
 
+    blacklist = read_blacklist()
+
     # Write to a new list
     list_filename = patch_list_file()
     list_file = open(list_filename + ".new", "w")
@@ -31,6 +33,9 @@ def main(options, args):
         for component in DISTROS[distro]["components"]:
             for source in get_sources(distro, dist, component):
                 package = source["Package"]
+
+                if package in blacklist:
+                    continue
 
                 # Publish slipped patches in preference to true-base ones
                 slip_filename = patch_file(distro, source, True)
