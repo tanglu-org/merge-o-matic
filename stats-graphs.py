@@ -241,17 +241,20 @@ def range_chart(component, history, start, today, events):
                                 fill_style=FILL_STYLES[key])
             ar.add_plot(plot)
 
-        for date, text in events:
+        ar.draw(c)
+
+        for date, info in events:
             xpos = ar.x_pos(date_to_ordinal(date))
             ypos = ar.loc[1] + ar.size[1]
 
-            tb = text_box.T(loc=(xpos + 25, ypos + 25), text=text)
+            (level, text) = info.split(" ", 1)
+            level = int(level)
+
+            tb = text_box.T(loc=(xpos + 25, ypos + 45 - (20 * level)), text=text)
             tb.add_arrow((xpos, ypos))
             tb.draw()
 
-            c.line(line_style.black_dash1, xpos, ar.loc[1], xpos, ypos)
-
-        ar.draw(c)
+            c.line(line_style.black_dash2, xpos, ar.loc[1], xpos, ypos)
     finally:
         c.close()
 
