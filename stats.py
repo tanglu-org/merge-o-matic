@@ -88,6 +88,9 @@ def main(options, args):
             if our_version == src_version:
                 logging.debug("%s: unmodified", package)
                 stats["unmodified"] += 1
+            elif base > src_version:
+                logging.debug("%s: locally repackaged", package)
+                stats["repackaged"] += 1
             elif our_version == base:
                 logging.debug("%s: needs sync", package)
                 stats["needs-sync"] += 1
