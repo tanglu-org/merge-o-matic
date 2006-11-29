@@ -672,8 +672,9 @@ def add_changelog(package, merged_version, left_distro, left_dist,
             print >>new_changelog, ("%s (%s) %s; urgency=low"
                                     % (package, merged_version, left_dist))
             print >>new_changelog
-            print >>new_changelog, "  * Merge from %s %s." \
+            print >>new_changelog, "  * Merge from %s %s, remaining changes:" \
                   % (right_distro, right_dist)
+            print >>new_changelog, "    - SUMMARISE HERE"
             print >>new_changelog
             print >>new_changelog, (" -- Ubuntu Merge-o-Matic <mom@ubuntu.com>  " +
                                     time.strftime("%a, %d %b %Y %H:%M:%S %z"))
