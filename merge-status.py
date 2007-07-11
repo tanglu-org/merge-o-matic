@@ -4,7 +4,10 @@
 # output merge status
 
 import os
+import sys
+import glob
 
+from rfc822 import parseaddr
 from momlib import *
 
 
@@ -91,6 +94,8 @@ def main(options, args):
                 user = None
                 uploaded = False
 
+            uploader = get_uploader(our_distro, source)
+
             if uploaded:
                 section = "updated"
             elif not after_uvf:
@@ -101,7 +106,8 @@ def main(options, args):
                 section = "new"
 
             merges.append((section, priority_idx, source["Package"], user,
-                           source, base_version, left_version, right_version))
+                           uploader, source, base_version,
+                           left_version, right_version))
 
         write_status_page(our_component, merges, our_distro, src_distro)
 
@@ -198,21 +204,35 @@ def do_table(status, merges, left_distro, right_distro):
     print >>status, "<td><b>Base Version</b></td>"
     print >>status, "</tr>"
 
-    for uploaded, priority, package, user, source, \
+    for uploaded, priority, package, user, uploader, source, \
             base_version, left_version, right_version in merges:
         if user is not None:
-            user = user.replace("&", "&amp;")
-            user = user.replace("<", "&lt;")
-            user = user.replace(">", "&gt;")
+            who = user
+            who = who.replace("&", "&amp;")
+            who = who.replace("<", "&lt;")
+            who = who.replace(">", "&gt;")
+
+            if uploader is not None:
+                (usr_name, usr_mail) = parseaddr(user)
+                (upl_name, upl_mail) = parseaddr(uploader)
+
+                if len(usr_name) and usr_name != upl_name:
+                    u_who = uploader
+                    u_who = u_who.replace("&", "&amp;")
+                    u_who = u_who.replace("<", "&lt;")
+                    u_who = u_who.replace(">", "&gt;")
+
+                    who = "%s<br><small><em>Uploader:</em> %s</small>" \
+                            % (who, u_who)
         else:
-            user = "&nbsp;"
+            who = "&nbsp;"
 
         print >>status, "<tr bgcolor=%s class=first>" % COLOURS[priority]
         print >>status, "<td><tt><a href=\"%s/%s/REPORT\">" \
               "%s</a></tt>" % (pathhash(package), package, package)
         print >>status, " <a href=\"https://launchpad.net/distros/ubuntu/" \
               "+source/%s\">(lp)</a></td>" % package
-        print >>status, "<td colspan=3>%s</td>" % user
+        print >>status, "<td colspan=3>%s</td>" % who
         print >>status, "</tr>"
         print >>status, "<tr bgcolor=%s>" % COLOURS[priority]
         print >>status, "<td><small>%s</small></td>" % source["Binary"]
@@ -222,6 +242,27 @@ def do_table(status, merges, left_distro, right_distro):
         print >>status, "</tr>"
 
     print >>status, "</table>"
+
+def get_uploader(distro, source):
+    """Obtain the uploader from the dsc file signature."""
+    for md5sum, size, name in files(source):
+        if name.endswith(".dsc"):
+            dsc_file = name
+            break
+    else:
+        return None
+
+    filename = "%s/pool/%s/%s/%s/%s" \
+            % (ROOT, distro, pathhash(source["Package"]), source["Package"], 
+               dsc_file)
+
+    (a, b, c) = os.popen3("gpg --verify %s" % filename)
+    stdout = c.readlines()
+    try:
+        return stdout[1].split("Good signature from")[1].strip().strip("\"")
+    except IndexError:
+        return None
+
 
 if __name__ == "__main__":
     run(main, options, usage="%prog",
