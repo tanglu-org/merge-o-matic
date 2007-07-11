@@ -21,11 +21,11 @@ ROOT = "/srv/patches.ubuntu.com"
 DISTROS = {
     "ubuntu": {
         "mirror": "http://archive.ubuntu.com/ubuntu",
-        "dists": [ "feisty" ],
+        "dists": [ "gutsy" ],
         "components": [ "main", "restricted", "universe", "multiverse" ],
         },
     "debian": {
-        "mirror": "http://ftp.uk.debian.org/debian",
+        "mirror": "http://ftp.debian.org/debian",
         "dists": [ "unstable", "experimental" ],
         "components": [ "main", "contrib", "non-free" ],
         },
@@ -33,7 +33,7 @@ DISTROS = {
 
 # Destination distribution and release
 OUR_DISTRO = "ubuntu"
-OUR_DIST   = "feisty"
+OUR_DIST   = "gutsy"
 
 # Default source distrbution and release
 SRC_DISTRO = "debian"
