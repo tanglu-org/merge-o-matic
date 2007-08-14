@@ -109,12 +109,35 @@ def main(options, args):
                            uploader, source, base_version,
                            left_version, right_version))
 
+        merges.sort()
+
         write_status_page(our_component, merges, our_distro, src_distro)
+        write_status_file(our_component, merges, our_distro, src_distro)
+
+
+def get_uploader(distro, source):
+    """Obtain the uploader from the dsc file signature."""
+    for md5sum, size, name in files(source):
+        if name.endswith(".dsc"):
+            dsc_file = name
+            break
+    else:
+        return None
+
+    filename = "%s/pool/%s/%s/%s/%s" \
+            % (ROOT, distro, pathhash(source["Package"]), source["Package"], 
+               dsc_file)
+
+    (a, b, c) = os.popen3("gpg --verify %s" % filename)
+    stdout = c.readlines()
+    try:
+        return stdout[1].split("Good signature from")[1].strip().strip("\"")
+    except IndexError:
+        return None
+
 
 def write_status_page(component, merges, left_distro, right_distro):
     """Write out the merge status page."""
-    merges.sort()
-
     status_file = "%s/merges/%s.html" % (ROOT, component)
     status = open(status_file + ".new", "w")
     try:
@@ -243,25 +266,21 @@ def do_table(status, merges, left_distro, right_distro):
 
     print >>status, "</table>"
 
-def get_uploader(distro, source):
-    """Obtain the uploader from the dsc file signature."""
-    for md5sum, size, name in files(source):
-        if name.endswith(".dsc"):
-            dsc_file = name
-            break
-    else:
-        return None
 
-    filename = "%s/pool/%s/%s/%s/%s" \
-            % (ROOT, distro, pathhash(source["Package"]), source["Package"], 
-               dsc_file)
-
-    (a, b, c) = os.popen3("gpg --verify %s" % filename)
-    stdout = c.readlines()
+def write_status_file(component, merges, left_distro, right_distro):
+    """Write out the merge status file."""
+    status_file = "%s/merges/tomerge-%s" % (ROOT, component)
+    status = open(status_file + ".new", "w")
     try:
-        return stdout[1].split("Good signature from")[1].strip().strip("\"")
-    except IndexError:
-        return None
+        for uploaded, priority, package, user, uploader, source, \
+                base_version, left_version, right_version in merges:
+            print >>status, "%s %s %s %s, %s, %s" \
+                  % (package, base_version, left_version, right_version,
+                     user, uploader)
+    finally:
+        status.close()
+
+    os.rename(status_file + ".new", status_file)
 
 
 if __name__ == "__main__":
