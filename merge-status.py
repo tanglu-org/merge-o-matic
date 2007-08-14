@@ -274,9 +274,9 @@ def write_status_file(component, merges, left_distro, right_distro):
     try:
         for uploaded, priority, package, user, uploader, source, \
                 base_version, left_version, right_version in merges:
-            print >>status, "%s %s %s %s, %s, %s" \
-                  % (package, base_version, left_version, right_version,
-                     user, uploader)
+            print >>status, "%s %s %s %s %s, %s, %s" \
+                  % (package, priority, base_version,
+                     left_version, right_version, user, uploader)
     finally:
         status.close()
 
