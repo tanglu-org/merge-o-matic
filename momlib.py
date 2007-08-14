@@ -25,7 +25,7 @@ DISTROS = {
         "components": [ "main", "restricted", "universe", "multiverse" ],
         },
     "debian": {
-        "mirror": "http://ftp.debian.org/debian",
+        "mirror": "http://ftp.se.debian.org/debian",
         "dists": [ "unstable", "experimental" ],
         "components": [ "main", "contrib", "non-free" ],
         },
