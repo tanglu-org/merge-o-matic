@@ -693,8 +693,9 @@ def copy_in(output_dir, source, distro=None):
     for md5sum, size, name in files(source):
         src = "%s/%s/%s" % (ROOT, source["Directory"], name)
         dest = "%s/%s" % (output_dir, name)
-        if not os.path.isfile(dest):
-            os.link(src, dest)
+        if os.path.isfile(dest):
+            os.unlink(dest)
+        os.link(src, dest)
 
     if distro is None:
         return None
