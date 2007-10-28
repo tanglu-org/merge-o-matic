@@ -179,7 +179,9 @@ def date_tics(min, max):
 
 def sources_intervals(max):
     """Return the standard and minimal interval for the sources axis."""
-    if max > 1000:
+    if max > 10000:
+        return (10000, 2500)
+    elif max > 1000:
         return (1000, 250)
     elif max > 100:
         return (100, 25)
