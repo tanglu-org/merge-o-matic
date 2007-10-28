@@ -96,12 +96,12 @@ def ordinal_to_label(o):
 
 def trend_start(today):
     """Return the date from which to begin displaying the trend chart."""
-    if today.month > 6:
+    if today.month > 9:
         s_year = today.year
-        s_month = today.month - 6
+        s_month = today.month - 9
     else:
         s_year = today.year - 1
-        s_month = today.month + 6
+        s_month = today.month + 3
 
     s_day = min(calendar.monthrange(s_year, s_month)[1], today.day)
     start = datetime.date(s_year, s_month, s_day)
