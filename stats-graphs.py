@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 #
 # output stats graphs
 
@@ -56,9 +56,8 @@ def options(parser):
 def main(options, args):
     distro = options.distro
 
-    # Read from the stats file, and separate out any special events
+    # Read from the stats file
     stats = read_stats()
-    events = get_events(stats)
 
     # Initialise pychart
     theme.use_color = True
@@ -67,6 +66,7 @@ def main(options, args):
     # Get the range of the trend chart
     today = datetime.date.today()
     start = trend_start(today)
+    events = get_events(stats, start)
 
     # Iterate the components and calculate the peaks over the last six
     # months, as well as the current stats
@@ -128,9 +128,14 @@ def read_stats():
 
     return stats
 
-def get_events(stats):
+def get_events(stats, start):
     """Get the list of interesting events."""
-    return [ (d, i) for d, w, i in stats["event"] ]
+    events = []
+    for date, time, info in stats["event"]:
+        if date_to_datetime(date) >= start:
+            events.append((date, info))
+
+    return events
 
 def info_to_data(date, info):
     """Convert an optional date and information set into a data set."""
@@ -243,14 +248,22 @@ def range_chart(component, history, start, today, events):
 
         ar.draw(c)
 
-        for date, info in events:
+        levels = [ 0, 0, 0 ]
+
+        for date, text in events:
             xpos = ar.x_pos(date_to_ordinal(date))
             ypos = ar.loc[1] + ar.size[1]
 
-            (level, text) = info.split(" ", 1)
-            level = int(level)
+            for level, bar in enumerate(levels):
+                if bar < xpos:
+                    width = int(font.text_width(text))
+                    levels[level] = xpos + 25 + width
+                    break
+            else:
+                continue
 
-            tb = text_box.T(loc=(xpos + 25, ypos + 45 - (20 * level)), text=text)
+            tb = text_box.T(loc=(xpos + 25, ypos + 45 - (20 * level)),
+                            text=text)
             tb.add_arrow((xpos, ypos))
             tb.draw()
 
