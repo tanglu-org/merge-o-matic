@@ -229,7 +229,7 @@ def range_chart(component, history, start, today, events):
     filename = "%s/merges/%s-trend.png" % (ROOT, component)
     c = canvas.init(filename, format="png")
     try:
-        ar = area.T(size=(300,225), legend=legend.T(),
+        ar = area.T(size=(450,225), legend=legend.T(),
                     x_axis=axis.X(label="Date", format=ordinal_to_label,
                                   tic_interval=date_tics,
                                   tic_label_offset=(10,0)),
