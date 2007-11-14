@@ -26,7 +26,7 @@ DISTROS = {
         },
     "debian": {
         "mirror": "http://ftp.uk.debian.org/debian",
-        "dists": [ "testing", "unstable", "experimental" ],
+        "dists": [ "unstable", "experimental" ],
         "components": [ "main", "contrib", "non-free" ],
         },
     }
