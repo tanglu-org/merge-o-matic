@@ -76,12 +76,12 @@ def publish_patch(distro, source, filename, list_file):
             os.unlink(junkpath)
 
     # Publish extracted patches
+    output = "%s/extracted" % os.path.dirname(publish_filename)
+    if os.path.isdir(output):
+        tree.remove(output)
+
     dpatch_dir = dpatch_directory(distro, source)
     if os.path.isdir(dpatch_dir):
-        output = "%s/extracted" % os.path.dirname(publish_filename)
-        if os.path.isdir(output):
-            tree.remove(output)
-
         for dpatch in tree.walk(dpatch_dir):
             if not len(dpatch):
                 continue
