@@ -702,7 +702,9 @@ def copy_in(output_dir, source, distro=None):
 
     patch = patch_file(distro, source)
     if os.path.isfile(patch):
-        os.link(patch, "%s/%s" % (output_dir, os.path.basename(patch)))
+        output = "%s/%s" % (output_dir, os.path.basename(patch))
+        if not os.path.exists(output):
+            os.link(patch, output)
         return os.path.basename(patch)
     else:
         return None
