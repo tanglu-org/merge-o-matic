@@ -572,4 +572,9 @@ def append_rss(rss, title, link, filename):
 
 
     channel = rss.find("channel")
-    channel.append(item)
+    for i, e in enumerate(channel):
+        if i.tag == "item":
+            channel.insert (i, item)
+            break
+    else:
+        channel.append(item)
