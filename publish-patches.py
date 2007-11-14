@@ -24,6 +24,14 @@ def main(options, args):
 
     blacklist = read_blacklist()
 
+    patches_rss = read_rss(patch_rss_file(),
+                           title="Ubuntu Patches from Debian",
+                           link="http://patches.ubuntu.com/",
+                           description="This feed announces new patches from "
+                           "Ubuntu to Debian, each patch filename contains "
+                           "the complete difference between the two "
+                           "distributions for that package.")
+
     # Write to a new list
     list_filename = patch_list_file()
     list_file = open(list_filename + ".new", "w")
@@ -42,9 +50,11 @@ def main(options, args):
                 filename = patch_file(distro, source, False)
 
                 if os.path.isfile(slip_filename):
-                    publish_patch(distro, source, slip_filename, list_file)
+                    publish_patch(distro, source, slip_filename, list_file,
+                                  patches_rss)
                 elif os.path.isfile(filename):
-                    publish_patch(distro, source, filename, list_file)
+                    publish_patch(distro, source, filename, list_file,
+                                  patches_rss)
                 else:
                     unpublish_patch(distro, source)
     finally:
@@ -53,14 +63,31 @@ def main(options, args):
     # Move the new list over the old one
     os.rename(list_filename + ".new", list_filename)
 
+    write_rss(patch_rss_file(), patches_rss)
 
-def publish_patch(distro, source, filename, list_file):
+
+def publish_patch(distro, source, filename, list_file, patches_rss):
     """Publish the latest version of the patch for all to see."""
     publish_filename = published_file(distro, source)
 
     ensure(publish_filename)
     if os.path.isfile(publish_filename):
+        # Check whether they are different before appending
+        old_md5 = md5.new(open(publish_filename).read()).hexdigest()
+        new_md5 = md5.new(open(filename).read()).hexdigest()
+        if old_md5 != new_md5:
+            append_rss(patches_rss,
+                       title=os.path.basename(publish_filename),
+                       link=("http://patches.ubuntu.com/by-release/" +
+                             tree.subdir(ROOT, filename)),
+                       filename=filename)
         os.unlink(publish_filename)
+    else:
+        append_rss(patches_rss,
+                   title=os.path.basename(publish_filename),
+                   link=("http://patches.ubuntu.com/by-release/" +
+                         tree.subdir(ROOT, filename)),
+                   filename=filename)
     os.link(filename, publish_filename)
 
     logging.info("Published %s", tree.subdir(ROOT, publish_filename))

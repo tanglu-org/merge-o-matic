@@ -4,14 +4,21 @@
 import os
 import sys
 import md5
+import time
 import errno
 import logging
+import datetime
 
 from optparse import OptionParser
 
 from deb.controlfile import ControlFile
 from deb.version import Version
 from util import shell, tree
+
+try:
+    from xml.etree import ElementTree
+except ImportError:
+    from elementtree import ElementTree
 
 
 # Output root
@@ -45,6 +52,9 @@ LAUNCHPAD_URL      = "https://launchpad.net/"
 LAUNCHPAD_EMAIL    = "mom@ubuntu.com"
 LAUNCHPAD_USERNAME = "mom-ubuntu"
 LAUNCHPAD_PASSWORD = "1YFNuixv"
+
+# Time format for RSS feeds
+RSS_TIME_FORMAT = "%a, %d %b %Y %H:%M:%S %Z"
 
 
 # Cache of parsed sources files
@@ -174,6 +184,10 @@ def published_file(distro, source):
 def patch_list_file():
     """Return the location of the patch list."""
     return "%s/published/PATCHES" % ROOT
+
+def patch_rss_file():
+    """Return the location of the patch rss feed."""
+    return "%s/published/patches.xml" % ROOT
 
 def work_dir(package, version):
     """Return the directory to produce the merge result."""
@@ -491,3 +505,71 @@ def read_blacklist():
         blacklist.close()
 
     return bl
+
+
+# --------------------------------------------------------------------------- #
+# RSS feed handling
+# --------------------------------------------------------------------------- #
+
+def read_rss(filename, title, link, description):
+    """Read an RSS feed, or generate a new one."""
+    rss = ElementTree.Element("rss", version="2.0")
+
+    channel = ElementTree.SubElement(rss, "channel")
+
+    e = ElementTree.SubElement(channel, "title")
+    e.text = title
+
+    e = ElementTree.SubElement(channel, "link")
+    e.text = link
+
+    e = ElementTree.SubElement(channel, "description")
+    e.text = description
+
+    now = time.gmtime()
+
+    e = ElementTree.SubElement(channel, "pubDate")
+    e.text = time.strftime(RSS_TIME_FORMAT, now)
+
+    e = ElementTree.SubElement(channel, "lastBuildDate")
+    e.text = time.strftime(RSS_TIME_FORMAT, now)
+
+    e = ElementTree.SubElement(channel, "generator")
+    e.text = "Merge-o-Matic"
+
+
+    if os.path.isfile(filename):
+        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=7)
+
+        tree = ElementTree.parse(filename)
+        for item in tree.find("channel").findall("item"):
+            dt = datetime.datetime(*time.strptime(item.findtext("pubDate"),
+                                                  RSS_TIME_FORMAT)[:6])
+            if dt > cutoff:
+                channel.append(item)
+
+    return rss
+
+def write_rss(filename, rss):
+    """Write out an RSS feed."""
+    tree = ElementTree.ElementTree(rss)
+    tree.write(filename + ".new")
+    os.rename(filename + ".new", filename)
+
+def append_rss(rss, title, link, filename):
+    """Append an element to an RSS feed."""
+    item = ElementTree.Element("item")
+
+    e = ElementTree.SubElement(item, "title")
+    e.text = title
+
+    e = ElementTree.SubElement(item, "link")
+    e.text = link
+
+    e = ElementTree.SubElement(item, "pubDate")
+    e.text = time.strftime(RSS_TIME_FORMAT,
+                           time.gmtime(os.stat(filename).st_mtime))
+
+
+    channel = rss.find("channel")
+    channel.append(item)
