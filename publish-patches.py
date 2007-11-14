@@ -70,8 +70,28 @@ def publish_patch(distro, source, filename, list_file):
 
     # Remove older patches
     for junk in os.listdir(os.path.dirname(publish_filename)):
-        if junk != os.path.basename(publish_filename):
-            os.unlink("%s/%s" % (os.path.dirname(publish_filename), junk))
+        junkpath = "%s/%s" % (os.path.dirname(publish_filename), junk)
+        if os.path.isfile(junkpath) \
+                and junk != os.path.basename(publish_filename):
+            os.unlink(junkpath)
+
+    # Publish extracted patches
+    dpatch_dir = dpatch_directory(distro, source)
+    if os.path.isdir(dpatch_dir):
+        output = "%s/extracted" % os.path.dirname(publish_filename)
+        if os.path.isdir(output):
+            tree.remove(output)
+
+        for dpatch in tree.walk(dpatch_dir):
+            if not len(dpatch):
+                continue
+
+            src_filename = "%s/%s" % (dpatch_dir, dpatch)
+            dest_filename = "%s/%s" % (output, dpatch)
+
+            logging.info("Published %s", tree.subdir(ROOT, dest_filename))
+            ensure(dest_filename)
+            tree.copyfile(src_filename, dest_filename)
 
 def unpublish_patch(distro, source):
     """Remove any published patch."""

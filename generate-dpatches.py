@@ -71,16 +71,18 @@ def extract_dpatches(dirname, source):
         logging.debug("No debian/patches")
         return
 
-    patches = os.listdir(patchdir)
-    logging.debug("Found up to %d patches", len(patches))
-
-    for patch in patches:
-        if patch in ["00list", "series"]:
+    for patch in tree.walk(patchdir):
+        if os.path.basename(patch) in ["00list", "series", "README",
+                                       ".svn", "CVS", ".bzr", ".git"]:
+            continue
+        elif not len(patch):
             continue
 
         logging.debug("%s", patch)
         src_filename = "%s/%s" % (patchdir, patch)
         dest_filename = "%s/%s" % (dirname, patch)
+
+        ensure(dest_filename)
         tree.copyfile(src_filename, dest_filename)
 
 
