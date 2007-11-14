@@ -139,6 +139,12 @@ def changes_file(distro, source):
            % (ROOT, distro, pathhash(source["Package"]),
               source["Package"], source["Package"], source["Version"])
 
+def dpatch_directory(distro, source):
+    """Return the directory where we put dpatches."""
+    return "%s/dpatches/%s/%s/%s/%s" \
+           % (ROOT, distro, pathhash(source["Package"]), source["Package"],
+              source["Version"])
+
 def diff_directory(distro, source):
     """Return the directory where we can find diffs."""
     return "%s/diffs/%s/%s/%s" \
