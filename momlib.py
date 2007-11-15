@@ -165,11 +165,15 @@ def diff_file(distro, source):
     return "%s/%s_%s.patch" % (diff_directory(distro, source),
                                source["Package"], source["Version"])
 
+def patch_directory(distro, source):
+    """Return the directory where we can find local patch files."""
+    return "%s/patches/%s/%s/%s" \
+           % (ROOT, distro, pathhash(source["Package"]), source["Package"])
+
 def patch_file(distro, source, slipped=False):
     """Return the location of a local patch file."""
-    path = "%s/patches/%s/%s/%s/%s_%s" \
-           % (ROOT, distro, pathhash(source["Package"]),
-              source["Package"], source["Package"], source["Version"])
+    path = "%s/%s_%s" % (patch_directory(distro, source),
+                         source["Package"], source["Version"])
     if slipped:
         return path + ".slipped-patch"
     else:
@@ -185,9 +189,19 @@ def patch_list_file():
     """Return the location of the patch list."""
     return "%s/published/PATCHES" % ROOT
 
-def patch_rss_file():
+def patch_rss_file(distro=None, source=None):
     """Return the location of the patch rss feed."""
-    return "%s/published/patches.xml" % ROOT
+    if distro is None or source is None:
+        return "%s/published/patches.xml" % ROOT
+    else:
+        return "%s/patches.xml" % patch_directory(distro, source)
+
+def diff_rss_file(distro=None, source=None):
+    """Return the location of the diff rss feed."""
+    if distro is None or source is None:
+        return "%s/diffs/patches.xml" % ROOT
+    else:
+        return "%s/patches.xml" % diff_directory(distro, source)
 
 def work_dir(package, version):
     """Return the directory to produce the merge result."""
@@ -542,21 +556,22 @@ def read_rss(filename, title, link, description):
         cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=7)
 
         tree = ElementTree.parse(filename)
-        for item in tree.find("channel").findall("item"):
+        for i, item in enumerate(tree.find("channel").findall("item")):
             dt = datetime.datetime(*time.strptime(item.findtext("pubDate"),
                                                   RSS_TIME_FORMAT)[:6])
-            if dt > cutoff:
+            if dt > cutoff or i < 10:
                 channel.append(item)
 
     return rss
 
 def write_rss(filename, rss):
     """Write out an RSS feed."""
+    ensure(filename)
     tree = ElementTree.ElementTree(rss)
     tree.write(filename + ".new")
     os.rename(filename + ".new", filename)
 
-def append_rss(rss, title, link, filename):
+def append_rss(rss, title, link, author=None, filename=None):
     """Append an element to an RSS feed."""
     item = ElementTree.Element("item")
 
@@ -566,14 +581,19 @@ def append_rss(rss, title, link, filename):
     e = ElementTree.SubElement(item, "link")
     e.text = link
 
-    e = ElementTree.SubElement(item, "pubDate")
-    e.text = time.strftime(RSS_TIME_FORMAT,
-                           time.gmtime(os.stat(filename).st_mtime))
+    if author is not None:
+        e = ElementTree.SubElement(item, "author")
+        e.text = author
+
+    if filename is not None:
+        e = ElementTree.SubElement(item, "pubDate")
+        e.text = time.strftime(RSS_TIME_FORMAT,
+                               time.gmtime(os.stat(filename).st_mtime))
 
 
     channel = rss.find("channel")
     for i, e in enumerate(channel):
-        if i.tag == "item":
+        if e.tag == "item":
             channel.insert (i, item)
             break
     else:
