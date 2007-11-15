@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# mail diffs and/or patches
+# send out e-mails and update rss feeds
 
 import os
+import md5
 import fcntl
 import logging
 
@@ -34,8 +35,24 @@ def main(options, args):
 
     subscriptions = read_subscriptions()
 
+    patch_rss = read_rss(patch_rss_file(),
+                         title="Ubuntu Patches from Debian",
+                         link="http://patches.ubuntu.com/",
+                         description="This feed announces new patches from "
+                         "Ubuntu to Debian, each patch filename contains "
+                         "the complete difference between the two "
+                         "distributions for that package.")
+
+    diff_rss = read_rss(diff_rss_file(),
+                        title="Ubuntu Uploads",
+                        link="http://patches.ubuntu.com/by-release/atomic/",
+                        description="This feed announces new changes in "
+                        "Ubuntu, each patch filename contains the difference "
+                        "between the new version and the previous one.")
+
+
     # For each package in the given distributions, iterate the pool in order
-    # and generate a diff from the previous version and a changes file
+    # and select various interesting files for syndication
     for distro in distros:
         for dist in DISTROS[distro]["dists"]:
             for component in DISTROS[distro]["components"]:
@@ -52,39 +69,71 @@ def main(options, args):
                     sources = get_pool_sources(distro, source["Package"])
                     version_sort(sources)
 
+                    this_patch_rss = read_rss(patch_rss_file(distro, source),
+                                             title="Ubuntu Patches from Debian for %s" % source["Package"],
+                                             link=("http://patches.ubuntu.com/by-release/" +
+                                                   tree.subdir("%s/patches" % ROOT,
+                                                               patch_directory(distro, source))),
+                                              description="This feed announces new patches from "
+                                              "Ubuntu to Debian for %s, each patch filename contains "
+                                              "the complete difference between the two "
+                                              "distributions for that package." % source["Package"])
+                    this_diff_rss = read_rss(diff_rss_file(distro, source),
+                                             title="Ubuntu Uploads for %s" % source["Package"],
+                                             link=("http://patches.ubuntu.com/by-release/atomic/" +
+                                                   tree.subdir("%s/diffs" % ROOT,
+                                                               diff_directory(distro, source))),
+                                             description="This feed announces new changes in "
+                                             "Ubuntu for %s, each patch filename contains the "
+                                             "difference between the new version and the "
+                                             "previous one." % source["Package"])
+
                     last = None
                     for this in sources:
                         if watermark >= this["Version"]:
                             last = this
                             continue
 
+                        logging.debug("%s: %s %s", distro,
+                                      this["Package"], this["Version"])
+
+                        changes_filename = changes_file(distro, this)
+                        if not os.path.isfile(changes_filename):
+                            logging.warning("Missing changes file")
+                            continue
+
+                        # Extract the author's e-mail from the changes file
+                        info = ControlFile(changes_filename, multi_para=False,
+                                           signed=False).para
+                        if "Changed-By" not in info:
+                            uploader = None
+                        else:
+                            uploader = parseaddr(info["Changed-By"])[-1]
+
+                        update_feeds(distro, last, this, uploader,
+                                     patch_rss, this_patch_rss,
+                                     diff_rss, this_diff_rss)
+
                         try:
-                            mail_diff(distro, last, this, subscriptions)
+                            mail_diff(distro, last, this, uploader,
+                                      subscriptions)
                         except MemoryError:
                             logging.error("Ran out of memory")
 
                         last = this
 
+                    write_rss(patch_rss_file(distro, source), this_patch_rss)
+                    write_rss(diff_rss_file(distro, source), this_diff_rss)
                     save_watermark(distro, source, this["Version"])
 
-def mail_diff(distro, last, this, subscriptions):
+    write_rss(patch_rss_file(), patch_rss)
+    write_rss(diff_rss_file(), diff_rss)
+
+
+def mail_diff(distro, last, this, uploader, subscriptions):
     """Mail a diff out to the subscribers."""
-    package = this["Package"]
-    logging.debug("%s: %s %s", distro, package, this["Version"])
-
-    changes_filename = changes_file(distro, this)
-    if not os.path.isfile(changes_filename):
-        logging.warning("Missing changes file")
-        return
-
-    # Extract the author's e-mail from the changes file
-    info = ControlFile(changes_filename, multi_para=False, signed=False).para
-    if "Changed-By" not in info:
-        uploader = None
-    else:
-        uploader = parseaddr(info["Changed-By"])[-1]
-
-    recipients = get_recipients(distro, package, uploader, subscriptions)
+    recipients = get_recipients(distro, this["Package"],
+                                uploader, subscriptions)
     if not len(recipients):
         return
 
@@ -130,6 +179,7 @@ previous version of the same source package in Ubuntu.""")
         return
 
     # Extract the changes file
+    changes_filename = changes_file(distro, this)
     changes = MIMEText(open(changes_filename).read())
     changes.add_header("Content-Disposition", "inline",
                        filename="%s" % os.path.basename(changes_filename))
@@ -141,7 +191,7 @@ previous version of the same source package in Ubuntu.""")
     message.add_header("Date", formatdate())
     message.add_header("Subject", subject)
     message.add_header("Message-ID", make_msgid())
-    message.add_header("X-Your-Mom", "mom.ubuntu.com %s" % package)
+    message.add_header("X-Your-Mom", "mom.ubuntu.com %s" % this["Package"])
     message.add_header("X-PTS-Approved", "yes")
     message.attach(intro)
     message.attach(changes)
@@ -219,6 +269,44 @@ def send_message(message, recipients):
     smtp.quit()
 
 
+def update_feeds(distro, last, this, uploader, patch_rss, this_patch_rss,
+                 diff_rss, this_diff_rss):
+    """Update the various RSS feeds."""
+    patch_filename = patch_file(distro, this, True)
+    if not os.path.isfile(patch_filename):
+        patch_filename = patch_file(distro, this, False)
+    if os.path.isfile(patch_filename):
+        append_rss(patch_rss,
+                   title=os.path.basename(patch_filename),
+                   link=("http://patches.ubuntu.com/by-release/" +
+                         tree.subdir("%s/patches" % ROOT, patch_filename)),
+                   author=uploader,
+                   filename=patch_filename)
+
+        append_rss(this_patch_rss,
+                   title=os.path.basename(patch_filename),
+                   link=("http://patches.ubuntu.com/by-release/" +
+                         tree.subdir("%s/patches" % ROOT, patch_filename)),
+                   author=uploader,
+                   filename=patch_filename)
+
+    diff_filename = diff_file(distro, this)
+    if os.path.isfile(diff_filename):
+        append_rss(diff_rss,
+                   title=os.path.basename(diff_filename),
+                   link=("http://patches.ubuntu.com/by-release/atomic/" +
+                         tree.subdir("%s/diffs" % ROOT, diff_filename)),
+                   author=uploader,
+                   filename=diff_filename)
+
+        append_rss(this_diff_rss,
+                   title=os.path.basename(diff_filename),
+                   link=("http://patches.ubuntu.com/by-release/atomic/" +
+                         tree.subdir("%s/diffs" % ROOT, diff_filename)),
+                   author=uploader,
+                   filename=diff_filename)
+
+
 def read_subscriptions():
     """Read the subscriptions file."""
     subscriptions = []
@@ -240,7 +328,7 @@ def read_subscriptions():
 
 def read_watermark(distro, source):
     """Read the watermark for a given source."""
-    mark_file = "%s/%s/mail-watermark" \
+    mark_file = "%s/%s/watermark" \
                 % (ROOT, pool_directory(distro, source["Package"]))
     if not os.path.isfile(mark_file):
         return Version("0")
@@ -253,7 +341,7 @@ def read_watermark(distro, source):
 
 def save_watermark(distro, source, version):
     """Save the watermark for a given source."""
-    mark_file = "%s/%s/mail-watermark" \
+    mark_file = "%s/%s/watermark" \
                 % (ROOT, pool_directory(distro, source["Package"]))
     mark = open(mark_file, "w")
     try:
@@ -264,4 +352,4 @@ def save_watermark(distro, source, version):
 
 if __name__ == "__main__":
     run(main, options, usage="%prog [DISTRO...]",
-        description="mail diffs and/or patches")
+        description="send out e-mails and update rss feeds")
