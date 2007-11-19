@@ -353,11 +353,13 @@ def handle_file(left_stat, left_dir, left_name, left_distro,
     if filename == "debian/changelog":
         # two-way merge of changelogs
         merge_changelog(left_dir, right_dir, merged_dir, filename)
-    elif filename.endswith(".po"):
+    elif filename.endswith(".po") and not \
+            same_file(left_stat, left_dir, right_stat, right_dir, filename):
         # two-way merge of po contents (do later)
         po_files.append(filename)
         return False
-    elif filename.endswith(".pot"):
+    elif filename.endswith(".pot") and not \
+            same_file(left_stat, left_dir, right_stat, right_dir, filename):
         # two-way merge of pot contents
         if merge_pot(left_dir, right_dir, merged_dir, filename):
             conflict_file(left_dir, left_distro, right_dir, right_distro,
