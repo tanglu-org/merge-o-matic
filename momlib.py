@@ -47,12 +47,6 @@ SRC_DISTRO = "debian"
 SRC_DIST   = "unstable"
 
 
-# Automated bug filing
-LAUNCHPAD_URL      = "https://launchpad.net/"
-LAUNCHPAD_EMAIL    = "mom@ubuntu.com"
-LAUNCHPAD_USERNAME = "mom-ubuntu"
-LAUNCHPAD_PASSWORD = "1YFNuixv"
-
 # Time format for RSS feeds
 RSS_TIME_FORMAT = "%a, %d %b %Y %H:%M:%S %Z"
 
