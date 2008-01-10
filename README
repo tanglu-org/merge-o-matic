@@ -1,0 +1,11 @@
+For detailed information on Merge-o-Matic, see:
+
+    https://wiki.ubuntu.com/MergeOMatic
+
+
+Dependencies
+------------
+
+ * Python 2.4 or higher
+ * python-beautifulsoup
+ * python-pychart
