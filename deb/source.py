@@ -1,14 +1,21 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""Parse Debian source control (dsc) files.
-
-This module contains a subclass of the generic ControlFile class (in
-deb.controlfile) which handles the extra functionality of dsc files.
-"""
-
-__copyright__ = "Copyright © 2005 Canonical Ltd."
-__author__    = "Scott James Remnant <scott@canonical.com>"
-
+# -*- coding: utf-8 -*-
+# deb/source.py - parse debian source control (dsc) files
+#
+# Copyright © 2008 Canonical Ltd.
+# Author: Scott James Remnant <scott@ubuntu.com>.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of version 3 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
 

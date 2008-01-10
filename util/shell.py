@@ -1,14 +1,21 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""Shell functions.
-
-This module contains functions that act somewhat like an ordinary UNIX
-shell enabling us to run processes and control their input and output.
-"""
-
-__copyright__ = "Copyright © 2005 Canonical Ltd."
-__author__    = "Scott James Remnant <scott@canonical.com>"
-
+# -*- coding: utf-8 -*-
+# util/shell.py - child process forking (popen-alike)
+#
+# Copyright © 2008 Canonical Ltd.
+# Author: Scott James Remnant <scott@ubuntu.com>.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of version 3 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys

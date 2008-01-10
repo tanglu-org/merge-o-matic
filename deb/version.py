@@ -1,19 +1,23 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
-"""Parse and compare Debian version strings.
-
-This module contains a class designed to sit in your Python code pretty
-naturally and represent a Debian version string.  It implements various
-special methods to make dealing with them sweet.
-"""
-
-__copyright__ = "Copyright © 2005 Canonical Ltd."
-__author__    = "Scott James Remnant <scott@canonical.com>"
-
+# -*- coding: utf-8 -*-
+# deb/version.py - parse and compare Debian version strings.
+#
+# Copyright © 2008 Canonical Ltd.
+# Author: Scott James Remnant <scott@ubuntu.com>.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of version 3 of the GNU General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-
-
 
 
 # Regular expressions make validating things easy
