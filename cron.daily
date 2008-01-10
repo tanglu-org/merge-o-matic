@@ -1,0 +1,56 @@
+#!/bin/sh
+
+set -e
+
+if [ "$DEBUG" = "y" ]; then
+	QUIET=""
+else
+	QUIET="-q"
+
+	if ! mkdir /srv/patches.ubuntu.com/.lock 2>/dev/null; then
+		echo "LOCKED (another one running?)"
+		exit 1
+	fi
+	trap "rmdir /srv/patches.ubuntu.com/.lock" 0
+fi
+
+cd /srv/patches.ubuntu.com/code
+
+# Update the blacklist
+wget -q -O/srv/patches.ubuntu.com/sync-blacklist.txt http://people.ubuntu.com/~ubuntu-archive/sync-blacklist.txt
+
+# Download new packages
+# mvo: 20070802 commented out debian-security, this caused a key error
+#      early. I hope this helps
+#./update-pool.py $QUIET debian debian-security ubuntu
+./update-pool.py $QUIET debian ubuntu
+
+# Update the Sources files against new packages that have been downloaded.
+./update-sources.py $QUIET
+
+# Generate changes, diffs and patches
+./generate-diffs.py $QUIET
+./generate-patches.py $QUIET
+./generate-dpatches.py $QUIET
+
+# Publish the Ubuntu patches so that Debian people can get at them
+./publish-patches.py $QUIET
+./syndicate.py $QUIET
+# ./mail-bugs.py $QUIET
+
+# Run the merge tool
+./produce-merges.py
+#-X ../experimental.txt
+#./produce-merges.py -I ../experimental.txt -S experimental
+
+# Produce pretty reports
+./stats.py $QUIET
+./stats-graphs.py $QUIET
+./merge-status.py $QUIET
+./manual-status.py $QUIET
+
+# Expire any old packages from the pool
+./expire-pool.py $QUIET
+
+# ?! untidy
+rm -rf /srv/patches.ubuntu.com/unpacked/*
