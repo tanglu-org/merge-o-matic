@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 set -e
+umask 002
 
 if [ "$DEBUG" = "y" ]; then
 	QUIET=""
@@ -31,6 +32,7 @@ else
 fi
 
 cd /srv/patches.ubuntu.com/code
+bzr update
 
 # Update the blacklist
 wget -q -O/srv/patches.ubuntu.com/sync-blacklist.txt http://people.ubuntu.com/~ubuntu-archive/sync-blacklist.txt
