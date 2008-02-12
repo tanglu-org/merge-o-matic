@@ -70,7 +70,8 @@ def generate_diff(distro, last, this):
     logging.debug("%s: %s %s", distro, this["Package"], this["Version"])
 
     changes_filename = changes_file(distro, this)
-    if not os.path.isfile(changes_filename):
+    if not os.path.isfile(changes_filename) \
+            and not os.path.isfile(changes_filename + ".bz2"):
         unpack_source(this)
         try:
             save_changes_file(changes_filename, this, last)
@@ -84,7 +85,8 @@ def generate_diff(distro, last, this):
         return
 
     diff_filename = diff_file(distro, this)
-    if not os.path.isfile(diff_filename):
+    if not os.path.isfile(diff_filename) \
+            and not os.path.isfile(diff_filename + ".bz2"):
         unpack_source(this)
         unpack_source(last)
         save_patch_file(diff_filename, last, this)
