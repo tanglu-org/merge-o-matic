@@ -97,7 +97,7 @@ def main(options, args):
             except KeyError:
                 priority_idx = 0
 
-            filename = changes_file(our_distro, our_source)
+            filename = changes_file(our_distro, source)
             if os.path.isfile(filename):
                 changes = open(filename)
             elif os.path.isfile(filename + ".bz2"):
