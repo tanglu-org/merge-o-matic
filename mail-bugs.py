@@ -19,6 +19,7 @@
 
 import os
 import re
+import bz2
 import logging
 import urllib2
 
@@ -82,12 +83,21 @@ def closed_bugs(distro, this):
     logging.debug("%s: %s %s", distro, this["Package"], this["Version"])
 
     changes_filename = changes_file(distro, this)
-    if not os.path.isfile(changes_filename):
+    if os.path.isfile(changes_filename):
+        changes = open(changes_filename)
+    elif os.path.isfile(changes_filename + ".bz2"):
+        changes = bz2.BZ2File(changes_filename + ".bz2")
+    else:
         logging.warning("Missing changes file")
         return []
 
     # Extract the closes line from the changes file
-    info = ControlFile(changes_filename, multi_para=False, signed=False).para
+    try:
+        info = ControlFile(fileobj=changes,
+                           multi_para=False, signed=False).para
+    finally:
+        changes.close()
+
     if "Closes" not in info:
         return []
 

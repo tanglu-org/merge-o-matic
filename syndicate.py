@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import bz2
 import md5
 import fcntl
 import logging
@@ -112,17 +113,25 @@ def main(options, args):
                                       this["Package"], this["Version"])
 
                         changes_filename = changes_file(distro, this)
-                        if not os.path.isfile(changes_filename):
+                        if os.path.isfile(changes_filename):
+                            changes = open(changes_filename)
+                        elif os.path.isfile(changes_filename + ".bz2"):
+                            changes = bz2.BZ2File(changes_filename + ".bz2")
+                        else:
                             logging.warning("Missing changes file")
                             continue
 
                         # Extract the author's e-mail from the changes file
-                        info = ControlFile(changes_filename, multi_para=False,
-                                           signed=False).para
-                        if "Changed-By" not in info:
-                            uploader = None
-                        else:
-                            uploader = parseaddr(info["Changed-By"])[-1]
+                        try:
+                            info = ControlFile(fileobj=changes,
+                                               multi_para=False,
+                                               signed=False).para
+                            if "Changed-By" not in info:
+                                uploader = None
+                            else:
+                                uploader = parseaddr(info["Changed-By"])[-1]
+                        finally:
+                            changes.close()
 
                         update_feeds(distro, last, this, uploader,
                                      patch_rss, this_patch_rss,
@@ -194,7 +203,10 @@ previous version of the same source package in Ubuntu.""")
 
     # Extract the changes file
     changes_filename = changes_file(distro, this)
-    changes = MIMEText(open(changes_filename).read())
+    if os.path.isfile(changes_filename):
+        changes = MIMEText(open(changes_filename).read())
+    elif os.path.isfile(changes_filename + ".bz2"):
+        changes = MIMEText(bz2.BZ2File(changes_filename + ".bz2").read())
     changes.add_header("Content-Disposition", "inline",
                        filename="%s" % os.path.basename(changes_filename))
 
@@ -216,12 +228,19 @@ previous version of the same source package in Ubuntu.""")
 def patch_part(distro, this):
     """Construct an e-mail part containing the current patch."""
     patch_filename = patch_file(distro, this, True)
-    if not os.path.isfile(patch_filename):
+    if os.path.isfile(patch_filename):
+        part = MIMEText(open(patch_filename).read())
+    elif os.path.isfile(patch_filename + ".bz2"):
+        part = MIMEText(bz2.BZ2File(patch_filename + ".bz2").read())
+    else:
         patch_filename = patch_file(distro, this, False)
-    if not os.path.isfile(patch_filename):
-        return None
+        if os.path.isfile(patch_filename):
+            part = MIMEText(open(patch_filename).read())
+        elif os.path.isfile(patch_filename + ".bz2"):
+            part = MIMEText(bz2.BZ2File(patch_filename + ".bz2").read())
+        else:
+            return None
 
-    part = MIMEText(open(patch_filename).read())
     part.add_header("Content-Disposition", "attachment",
                     filename="%s" % os.path.basename(patch_filename))
     return part
@@ -229,10 +248,13 @@ def patch_part(distro, this):
 def diff_part(distro, this):
     """Construct an e-mail part containing the current diff."""
     diff_filename = diff_file(distro, this)
-    if not os.path.isfile(diff_filename):
+    if os.path.isfile(diff_filename):
+        part = MIMEText(open(diff_filename).read())
+    elif os.path.isfile(diff_filename + ".bz2"):
+        part = MIMEText(bz2.BZ2File(diff_filename + ".bz2").read())
+    else:
         return None
 
-    part = MIMEText(open(diff_filename).read())
     part.add_header("Content-Disposition", "attachment",
                     filename="%s" % os.path.basename(diff_filename))
     return part
@@ -287,9 +309,20 @@ def update_feeds(distro, last, this, uploader, patch_rss, this_patch_rss,
                  diff_rss, this_diff_rss):
     """Update the various RSS feeds."""
     patch_filename = patch_file(distro, this, True)
-    if not os.path.isfile(patch_filename):
-        patch_filename = patch_file(distro, this, False)
     if os.path.isfile(patch_filename):
+        pass
+    elif os.path.isfile(patch_filename + ".bz2"):
+        patch_filename += ".bz2"
+    else:
+        patch_filename = patch_file(distro, this, False)
+        if os.path.isfile(patch_filename):
+            pass
+        elif os.path.isfile(patch_filename + ".bz2"):
+            patch_filename += ".bz2"
+        else:
+            patch_filename = None
+
+    if patch_filename is not None:
         append_rss(patch_rss,
                    title=os.path.basename(patch_filename),
                    link=("http://patches.ubuntu.com/by-release/" +
@@ -306,6 +339,13 @@ def update_feeds(distro, last, this, uploader, patch_rss, this_patch_rss,
 
     diff_filename = diff_file(distro, this)
     if os.path.isfile(diff_filename):
+        pass
+    elif os.path.isfile(diff_filename + ".bz2"):
+        diff_filename += ".bz2"
+    else:
+        diff_filename = None
+
+    if diff_filename is not None:
         append_rss(diff_rss,
                    title=os.path.basename(diff_filename),
                    link=("http://patches.ubuntu.com/by-release/atomic/" +

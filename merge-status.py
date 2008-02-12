@@ -97,13 +97,20 @@ def main(options, args):
             except KeyError:
                 priority_idx = 0
 
-            filename = changes_file(our_distro, source)
+            filename = changes_file(our_distro, our_source)
             if os.path.isfile(filename):
-                changes = ControlFile(filename,
-                                      multi_para=False, signed=False).para
+                changes = open(filename)
+            elif os.path.isfile(filename + ".bz2"):
+                changes = bz2.BZ2File(filename + ".bz2")
+            else:
+                changes = None
 
-                user = changes["Changed-By"]
-                uploaded = changes["Distribution"] == OUR_DIST
+            if changes is not None:
+                info = ControlFile(fileobj=changes,
+                                   multi_para=False, signed=False).para
+
+                user = info["Changed-By"]
+                uploaded = info["Distribution"] == OUR_DIST
             else:
                 user = None
                 uploaded = False
