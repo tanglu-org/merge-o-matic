@@ -168,6 +168,7 @@ def write_status_page(component, merges, left_distro, right_distro):
         print >>status, "    border-top: 2px solid white;"
         print >>status, "}"
         print >>status, "</style>"
+        print >>status, "</head>"
         print >>status, "<body>"
         print >>status, "<img src=\".img/ubuntulogo-100.png\" id=\"ubuntu\">"
         print >>status, "<h1>Ubuntu Merge-o-Matic: %s manual</h1>" % component
@@ -217,8 +218,10 @@ def do_table(status, merges, left_distro, right_distro):
         print >>status, "<td><tt><a href=\"https://patches.ubuntu.com/" \
               "%s/%s/%s_%s.patch\">%s</a></tt>" \
               % (pathhash(package), package, package, left_version, package)
-        print >>status, " <a href=\"https://launchpad.net/distros/ubuntu/" \
-              "+source/%s\">(lp)</a></td>" % package
+        print >>status, " <sup><a href=\"https://launchpad.net/ubuntu/" \
+              "+source/%s\">LP</a></sup>" % package
+        print >>status, " <sup><a href=\"http://packages.qa.debian.org/" \
+              "%s\">PTS</a></sup></td>" % package
         print >>status, "<td colspan=2>%s</td>" % user
         print >>status, "</tr>"
         print >>status, "<tr bgcolor=%s>" % COLOURS[priority]
