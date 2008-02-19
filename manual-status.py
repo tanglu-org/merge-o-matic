@@ -168,6 +168,7 @@ def write_status_page(component, merges, left_distro, right_distro):
         print >>status, "    border-top: 2px solid white;"
         print >>status, "}"
         print >>status, "</style>"
+        print >>status, "<% import libcomments %>"
         print >>status, "</head>"
         print >>status, "<body>"
         print >>status, "<img src=\".img/ubuntulogo-100.png\" id=\"ubuntu\">"
@@ -184,7 +185,7 @@ def write_status_page(component, merges, left_distro, right_distro):
             print >>status, ("<h2 id=\"%s\">%s Merges</h2>"
                              % (section, section.title()))
 
-            do_table(status, section_merges, left_distro, right_distro)
+            do_table(status, section_merges, left_distro, right_distro, component)
 
         print >>status, "</body>"
         print >>status, "</html>"
@@ -193,12 +194,15 @@ def write_status_page(component, merges, left_distro, right_distro):
 
     os.rename(status_file + ".new", status_file)
 
-def do_table(status, merges, left_distro, right_distro):
+def do_table(status, merges, left_distro, right_distro, component):
     """Output a table."""
+    print >>status, "<% comment = libcomments.get_comments(\""+ROOT+"/merges/.comments\") %>"
     print >>status, "<table cellspacing=0>"
     print >>status, "<tr bgcolor=#d0d0d0>"
     print >>status, "<td rowspan=2><b>Package</b></td>"
     print >>status, "<td colspan=2><b>Last Uploader</b></td>"
+    print >>status, "<td rowspan=2><b>Comment</b></td>"
+    print >>status, "<td rowspan=2><b>Bug</b></td>"
     print >>status, "</tr>"
     print >>status, "<tr bgcolor=#d0d0d0>"
     print >>status, "<td><b>%s Version</b></td>" % left_distro.title()
@@ -223,6 +227,17 @@ def do_table(status, merges, left_distro, right_distro):
         print >>status, " <sup><a href=\"http://packages.qa.debian.org/" \
               "%s\">PTS</a></sup></td>" % package
         print >>status, "<td colspan=2>%s</td>" % user
+        print >>status, "<td rowspan=2><form method=\"get\" action=\"addcomment.py\"><br />"
+        print >>status, "<input type=\"hidden\" name=\"component\" value=\"%s\" />" % component
+        print >>status, "<input type=\"hidden\" name=\"package\" value=\"%s\" />" % package
+        print >>status, "<%%\n\
+the_comment = \"\"\n\
+if(comment.has_key(\"%s\")):\n\
+    the_comment = comment[\"%s\"]\n\
+req.write(\"<input type=\\\"text\\\" style=\\\"border-style: none; background-color: %s\\\" name=\\\"comment\\\" value=\\\"%%s\\\" />\" %% the_comment)\n\
+%%>" % (package, package, COLOURS[priority])
+        print >>status, "</form></td>"
+        print >>status, "<td rowspan=2><%% req.write(\"%%s\" %% libcomments.gen_buglink_from_comment(comment[\"%s\"])) %%></td>" % package
         print >>status, "</tr>"
         print >>status, "<tr bgcolor=%s>" % COLOURS[priority]
         print >>status, "<td><small>%s</small></td>" % source["Binary"]
