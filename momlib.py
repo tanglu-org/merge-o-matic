@@ -44,7 +44,7 @@ ROOT = "/srv/patches.ubuntu.com"
 DISTROS = {
     "ubuntu": {
         "mirror": "http://archive.ubuntu.com/ubuntu",
-        "dists": [ "hardy" ],
+        "dists": [ "intrepid" ],
         "components": [ "main", "restricted", "universe", "multiverse" ],
         },
     "debian": {
@@ -56,7 +56,7 @@ DISTROS = {
 
 # Destination distribution and release
 OUR_DISTRO = "ubuntu"
-OUR_DIST   = "hardy"
+OUR_DIST   = "intrepid"
 
 # Default source distrbution and release
 SRC_DISTRO = "debian"
