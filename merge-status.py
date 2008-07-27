@@ -134,6 +134,7 @@ def main(options, args):
         merges.sort()
 
         write_status_page(our_component, merges, our_distro, src_distro)
+        remove_old_comments(our_component, merges, ROOT+'/merges/.comments')
         write_status_file(our_component, merges, our_distro, src_distro)
 
 
@@ -322,6 +323,28 @@ def write_status_file(component, merges, left_distro, right_distro):
 
     os.rename(status_file + ".new", status_file)
 
+def remove_old_comments(component, merges, comments):
+    """Remove old comments from the comments file using
+       component's existing status file and merges"""
+
+    status = ROOT+"/merges/tomerge-"+component
+    if not os.path.isfile(status)
+        return
+
+    toremove = []
+
+    file_status = open(status, "r")
+    for line in file_status.readlines():
+        package = line.split(" ")[0]
+        if package not in [pkg[2] for pkg in merges]:
+            toremove.append(package)
+    file_status.close()
+
+    file_comments = open(comments, "w")
+    for line in open(comments, "r").readlines():
+        if line not in toremove:
+            file_comments.write(line)
+    file_comments.close()
 
 if __name__ == "__main__":
     run(main, options, usage="%prog",
