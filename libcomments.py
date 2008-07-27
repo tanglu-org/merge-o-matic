@@ -5,8 +5,7 @@ def get_comments(file):
        containing comments corresponding to packages"""
     comment = {}
     file_comments = open(file, "r")
-    lines_comments = file_comments.readlines()
-    for line in lines_comments:
+    for line in file_comments.readlines():
         splitted = line.split(": ", 1)
         package = splitted[0]
         the_comment = splitted[1]
