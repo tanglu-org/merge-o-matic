@@ -23,6 +23,7 @@ import logging
 from momlib import *
 from deb.version import Version
 from util import tree
+from re import search
 
 
 def options(parser):
@@ -68,6 +69,9 @@ def main(options, args):
         for our_source in get_sources(our_distro, our_dist, our_component):
             if options.package is not None \
                    and our_source["Package"] not in options.package:
+                continue
+
+            if search(".*build[1-9]+$", our_source["Version"]):
                 continue
 
             try:
