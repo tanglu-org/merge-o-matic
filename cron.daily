@@ -57,9 +57,9 @@ wget -q -O/srv/patches.ubuntu.com/sync-blacklist.txt http://people.ubuntu.com/~u
 # ./mail-bugs.py $QUIET
 
 # Run the merge tool
-./produce-merges.py
+./produce-merges.py -X ../merge-blacklist.txt
 #-X ../experimental.txt
-#./produce-merges.py -I ../experimental.txt -S experimental
+#./produce-merges.py -X ../merge-blacklist.txt -I ../experimental.txt -S experimental
 
 # Produce pretty reports
 ./stats.py $QUIET
