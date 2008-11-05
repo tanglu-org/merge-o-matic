@@ -22,16 +22,24 @@
 # Uncomment if you know that this deletes all the files in the CWD
 #EXPERT=y
 
+# Or uncommit if you want to use named subdirectories
+#SUBDIR=y
+
 
 set -e
+
+MERGE=$1
+
+if [ "$SUBDIR" = "y" ]; then
+    [ -d "$MERGE" ] || mkdir $MERGE
+    cd $MERGE
+fi
 
 if [ "$EXPERT" != "y" ] && [ -n "$(ls)" ]; then
     echo -n "Sure you want to delete all the files in $(pwd) [yn]? "
     read ANSWER
     [ $ANSWER = y ]
 fi
-
-MERGE=$1
 
 if [ "${MERGE#lib}" != "${MERGE}" ]; then
     HASH=${MERGE%${MERGE#????}}
@@ -80,3 +88,14 @@ echo "exec $(sed -n -e '/^  $ /s/^  $ dpkg-genchanges/dpkg-buildpackage/p' REPOR
 chmod +x merge-buildpackage
 
 echo "Run ../merge-genchanges or ../merge-buildpackage when done"
+
+if grep "^<.*>$" REPORT >/dev/null; then
+    echo
+    echo "*** WARNING ***"
+    echo
+    echo "It looks like this package is maintained in revision control:"
+    echo
+    sed -n "/^<.*>$/{s/^<\([^:]*\):\(.*\)>$/\1\t\2/p}" REPORT
+    echo
+    echo "You almost certainly don't want to continue without investigating."
+fi
