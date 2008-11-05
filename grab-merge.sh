@@ -89,13 +89,13 @@ chmod +x merge-buildpackage
 
 echo "Run ../merge-genchanges or ../merge-buildpackage when done"
 
-if grep "^<.*>$" REPORT >/dev/null; then
+if grep "^Vcs-" *.dsc >/dev/null; then
     echo
     echo "*** WARNING ***"
     echo
     echo "It looks like this package is maintained in revision control:"
     echo
-    sed -n "/^<.*>$/{s/^<\([^:]*\):\(.*\)>$/\1\t\2/p}" REPORT
+    grep "^Vcs-" *.dsc
     echo
     echo "You almost certainly don't want to continue without investigating."
 fi

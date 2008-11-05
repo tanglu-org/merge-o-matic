@@ -857,16 +857,12 @@ def write_report(left_source, left_distro, left_patch, base_source,
         print >>report, "base: %s" % base_source["Version"]
         for md5sum, size, name in files(base_source):
             print >>report, "    %s" % name
-        if "Vcs-Bzr" in base_source:
-            print >>report, "<bzr:%s>" % base_source["Vcs-Bzr"]
         print >>report
 
         # Left version and files
         print >>report, "%s: %s" % (left_distro, left_source["Version"])
         for md5sum, size, name in files(left_source):
             print >>report, "    %s" % name
-        if "Vcs-Bzr" in left_source:
-            print >>report, "<bzr:%s>" % left_source["Vcs-Bzr"]
         print >>report
         if left_patch is not None:
             print >>report, "base -> %s" % left_distro
@@ -877,8 +873,6 @@ def write_report(left_source, left_distro, left_patch, base_source,
         print >>report, "%s: %s" % (right_distro, right_source["Version"])
         for md5sum, size, name in files(right_source):
             print >>report, "    %s" % name
-        if "Vcs-Bzr" in right_source:
-            print >>report, "<bzr:%s>" % right_source["Vcs-Bzr"]
         print >>report
         if right_patch is not None:
             print >>report, "base -> %s" % right_distro
