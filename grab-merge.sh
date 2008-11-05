@@ -98,4 +98,5 @@ if grep "^Vcs-" *.dsc >/dev/null; then
     grep "^Vcs-" *.dsc
     echo
     echo "You almost certainly don't want to continue without investigating."
+    exit 1
 fi
