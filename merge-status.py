@@ -110,8 +110,14 @@ def main(options, args):
                 info = ControlFile(fileobj=changes,
                                    multi_para=False, signed=False).para
 
-                user = info["Changed-By"]
-                uploaded = info["Distribution"] == OUR_DIST
+                try:
+                    user = info["Changed-By"]
+                except KeyError:
+                    user = None
+                try:
+                    uploaded = info["Distribution"] == OUR_DIST
+                except KeyError:
+                    uploaded = False
             else:
                 user = None
                 uploaded = False
