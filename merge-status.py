@@ -328,7 +328,7 @@ def remove_old_comments(component, merges, comments):
        component's existing status file and merges"""
 
     status = ROOT+"/merges/tomerge-"+component
-    if not os.path.isfile(status)
+    if not os.path.isfile(status):
         return
 
     toremove = []
