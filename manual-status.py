@@ -181,6 +181,8 @@ def write_status_page(component, merges, left_distro, right_distro):
             print >>status, ("<p><a href=\"#%s\">%s %s merges</a></p>"
                              % (section, len(section_merges), section))
 
+        print >>status, "<% comment = libcomments.get_comments(\""+ROOT+"/merges/.comments\") %>"
+
         for section in SECTIONS:
             section_merges = [ m for m in merges if m[0] == section ]
 
@@ -198,7 +200,6 @@ def write_status_page(component, merges, left_distro, right_distro):
 
 def do_table(status, merges, left_distro, right_distro, component):
     """Output a table."""
-    print >>status, "<% comment = libcomments.get_comments(\""+ROOT+"/merges/.comments\") %>"
     print >>status, "<table cellspacing=0>"
     print >>status, "<tr bgcolor=#d0d0d0>"
     print >>status, "<td rowspan=2><b>Package</b></td>"
