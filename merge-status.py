@@ -297,7 +297,15 @@ if(comment.has_key(\"%s\")):\n\
 req.write(\"<input type=\\\"text\\\" style=\\\"border-style: none; background-color: %s\\\" name=\\\"comment\\\" value=\\\"%%s\\\" />\" %% the_comment)\n\
 %%>" % (package, package, COLOURS[priority])
         print >>status, "</form></td>"
-        print >>status, "<td rowspan=2><%% req.write(\"%%s\" %% libcomments.gen_buglink_from_comment(comment[\"%s\"])) %%></td>" % package
+        print >>status, "<td rowspan=2>"
+        print >>status, "<%%\n\
+if(comment.has_key(\"%s\")):\n\
+    req.write(\"%%s\" %% libcomments.gen_buglink_from_comment(comment[\"%s\"]))\n\
+else:\n\
+    req.write(\"&nbsp;\")\n\
+\n\
+%%>" % (package, package)
+        print >>status, "</td>"
         print >>status, "</tr>"
         print >>status, "<tr bgcolor=%s>" % COLOURS[priority]
         print >>status, "<td><small>%s</small></td>" % source["Binary"]
