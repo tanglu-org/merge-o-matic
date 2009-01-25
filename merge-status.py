@@ -294,7 +294,6 @@ def do_table(status, merges, left_distro, right_distro, component):
 the_comment = \"\"\n\
 if(comment.has_key(\"%s\")):\n\
     the_comment = comment[\"%s\"]\n\
-    the_comment = the_comment.replace(\"\\\"\", \"&quot;\")\n\
 req.write(\"<input type=\\\"text\\\" style=\\\"border-style: none; background-color: %s\\\" name=\\\"comment\\\" value=\\\"%%s\\\" title=\\\"%%s\\\" />\" %% (the_comment, the_comment))\n\
 %%>" % (package, package, COLOURS[priority])
         print >>status, "</form></td>"
