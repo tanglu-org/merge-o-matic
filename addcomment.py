@@ -1,9 +1,11 @@
 <%
 from momlib import *
+import fcntl
 
 def add_comment(package, comment, file):
     """Add a comment to the comments file"""
     file_comments = open(file, "a")
+    fcntl.lockf(file_comments, fcntl.LOCK_EX)
     the_comment = comment.replace("\n", " ")
     the_comment = escape(the_comment[:100], True)
     file_comments.write("%s: %s\n" % (package, the_comment))
