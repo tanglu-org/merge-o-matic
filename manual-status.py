@@ -126,6 +126,8 @@ def main(options, args):
                            our_source, our_version, src_version))
 
         write_status_page(our_component, merges, our_distro, src_distro)
+        remove_old_comments(our_component, merges, ROOT+'/merges/.comments')
+        write_status_file(our_component, merges, our_distro, src_distro)
 
 
 def write_status_page(component, merges, left_distro, right_distro):
@@ -168,6 +170,8 @@ def write_status_page(component, merges, left_distro, right_distro):
         print >>status, "    border-top: 2px solid white;"
         print >>status, "}"
         print >>status, "</style>"
+        print >>status, "<% import libcomments %>"
+        print >>status, "</head>"
         print >>status, "<body>"
         print >>status, "<img src=\".img/ubuntulogo-100.png\" id=\"ubuntu\">"
         print >>status, "<h1>Ubuntu Merge-o-Matic: %s manual</h1>" % component
@@ -177,13 +181,15 @@ def write_status_page(component, merges, left_distro, right_distro):
             print >>status, ("<p><a href=\"#%s\">%s %s merges</a></p>"
                              % (section, len(section_merges), section))
 
+        print >>status, "<% comment = libcomments.get_comments(\""+ROOT+"/merges/.comments\") %>"
+
         for section in SECTIONS:
             section_merges = [ m for m in merges if m[0] == section ]
 
             print >>status, ("<h2 id=\"%s\">%s Merges</h2>"
                              % (section, section.title()))
 
-            do_table(status, section_merges, left_distro, right_distro)
+            do_table(status, section_merges, left_distro, right_distro, component)
 
         print >>status, "</body>"
         print >>status, "</html>"
@@ -192,12 +198,14 @@ def write_status_page(component, merges, left_distro, right_distro):
 
     os.rename(status_file + ".new", status_file)
 
-def do_table(status, merges, left_distro, right_distro):
+def do_table(status, merges, left_distro, right_distro, component):
     """Output a table."""
     print >>status, "<table cellspacing=0>"
     print >>status, "<tr bgcolor=#d0d0d0>"
     print >>status, "<td rowspan=2><b>Package</b></td>"
     print >>status, "<td colspan=2><b>Last Uploader</b></td>"
+    print >>status, "<td rowspan=2><b>Comment</b></td>"
+    print >>status, "<td rowspan=2><b>Bug</b></td>"
     print >>status, "</tr>"
     print >>status, "<tr bgcolor=#d0d0d0>"
     print >>status, "<td><b>%s Version</b></td>" % left_distro.title()
@@ -217,9 +225,30 @@ def do_table(status, merges, left_distro, right_distro):
         print >>status, "<td><tt><a href=\"https://patches.ubuntu.com/" \
               "%s/%s/%s_%s.patch\">%s</a></tt>" \
               % (pathhash(package), package, package, left_version, package)
-        print >>status, " <a href=\"https://launchpad.net/distros/ubuntu/" \
-              "+source/%s\">(lp)</a></td>" % package
+        print >>status, " <sup><a href=\"https://launchpad.net/ubuntu/" \
+              "+source/%s\">LP</a></sup>" % package
+        print >>status, " <sup><a href=\"http://packages.qa.debian.org/" \
+              "%s\">PTS</a></sup></td>" % package
         print >>status, "<td colspan=2>%s</td>" % user
+        print >>status, "<td rowspan=2><form method=\"get\" action=\"addcomment.py\"><br />"
+        print >>status, "<input type=\"hidden\" name=\"component\" value=\"%s\" />" % component
+        print >>status, "<input type=\"hidden\" name=\"package\" value=\"%s\" />" % package
+        print >>status, "<%%\n\
+the_comment = \"\"\n\
+if(comment.has_key(\"%s\")):\n\
+    the_comment = comment[\"%s\"]\n\
+req.write(\"<input type=\\\"text\\\" style=\\\"border-style: none; background-color: %s\\\" name=\\\"comment\\\" value=\\\"%%s\\\" title=\\\"%%s\\\" />\" %% (the_comment, the_comment))\n\
+%%>" % (package, package, COLOURS[priority])
+        print >>status, "</form></td>"
+        print >>status, "<td rowspan=2>"
+        print >>status, "<%%\n\
+if(comment.has_key(\"%s\")):\n\
+    req.write(\"%%s\" %% libcomments.gen_buglink_from_comment(comment[\"%s\"]))\n\
+else:\n\
+    req.write(\"&nbsp;\")\n\
+\n\
+%%>" % (package, package)
+        print >>status, "</td>"
         print >>status, "</tr>"
         print >>status, "<tr bgcolor=%s>" % COLOURS[priority]
         print >>status, "<td><small>%s</small></td>" % source["Binary"]
@@ -228,6 +257,44 @@ def do_table(status, merges, left_distro, right_distro):
         print >>status, "</tr>"
 
     print >>status, "</table>"
+
+def write_status_file(component, merges, left_distro, right_distro):
+    """Write out the merge status file."""
+    status_file = "%s/merges/tomerge-%s-manual" % (ROOT, component)
+    status = open(status_file + ".new", "w")
+    try:
+        for uploaded, priority, package, user, uploader, source, \
+                base_version, left_version, right_version in merges:
+            print >>status, "%s %s %s %s %s, %s, %s" \
+                  % (package, priority, base_version,
+                     left_version, right_version, user, uploader)
+    finally:
+        status.close()
+
+    os.rename(status_file + ".new", status_file)
+
+def remove_old_comments(component, merges, comments):
+    """Remove old comments from the comments file using
+       component's existing status file and merges"""
+
+    status = ROOT+"/merges/tomerge-"+component+"-manual"
+    if not os.path.isfile(status):
+        return
+
+    toremove = []
+
+    file_status = open(status, "r")
+    for line in file_status.readlines():
+        package = line.split(" ")[0]
+        if package not in [pkg[2] for pkg in merges]:
+            toremove.append(package)
+    file_status.close()
+
+    file_comments = open(comments, "w")
+    for line in open(comments, "r").readlines():
+        if line not in toremove:
+            file_comments.write(line)
+    file_comments.close()
 
 if __name__ == "__main__":
     run(main, options, usage="%prog",
