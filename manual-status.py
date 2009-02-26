@@ -117,7 +117,7 @@ def main(options, args):
                 user = None
                 uploaded = False
 
-            uploader = get_uploader(our_distro, source)
+            uploader = get_uploader(our_distro, our_source)
 
             if uploaded:
                 section = "updated"
