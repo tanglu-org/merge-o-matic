@@ -117,12 +117,14 @@ def main(options, args):
                 user = None
                 uploaded = False
 
+            uploader = get_uploader(our_distro, source)
+
             if uploaded:
                 section = "updated"
             else:
                 section = "new"
 
-            merges.append((section, priority_idx, package, user,
+            merges.append((section, priority_idx, package, user, uploader,
                            our_source, our_version, src_version))
 
         write_status_page(our_component, merges, our_distro, src_distro)
@@ -198,6 +200,26 @@ def write_status_page(component, merges, left_distro, right_distro):
 
     os.rename(status_file + ".new", status_file)
 
+def get_uploader(distro, source):
+    """Obtain the uploader from the dsc file signature."""
+    for md5sum, size, name in files(source):
+        if name.endswith(".dsc"):
+            dsc_file = name
+            break
+    else:
+        return None
+
+    filename = "%s/pool/%s/%s/%s/%s" \
+            % (ROOT, distro, pathhash(source["Package"]), source["Package"], 
+               dsc_file)
+
+    (a, b, c) = os.popen3("gpg --verify %s" % filename)
+    stdout = c.readlines()
+    try:
+        return stdout[1].split("Good signature from")[1].strip().strip("\"")
+    except IndexError:
+        return None
+
 def do_table(status, merges, left_distro, right_distro, component):
     """Output a table."""
     print >>status, "<table cellspacing=0>"
@@ -212,14 +234,28 @@ def do_table(status, merges, left_distro, right_distro, component):
     print >>status, "<td><b>%s Version</b></td>" % right_distro.title()
     print >>status, "</tr>"
 
-    for uploaded, priority, package, user, source, \
+    for uploaded, priority, package, user, uploader, source, \
             left_version, right_version in merges:
         if user is not None:
-            user = user.replace("&", "&amp;")
-            user = user.replace("<", "&lt;")
-            user = user.replace(">", "&gt;")
+            who = user
+            who = who.replace("&", "&amp;")
+            who = who.replace("<", "&lt;")
+            who = who.replace(">", "&gt;")
+
+            if uploader is not None:
+                (usr_name, usr_mail) = parseaddr(user)
+                (upl_name, upl_mail) = parseaddr(uploader)
+
+                if len(usr_name) and usr_name != upl_name:
+                    u_who = uploader
+                    u_who = u_who.replace("&", "&amp;")
+                    u_who = u_who.replace("<", "&lt;")
+                    u_who = u_who.replace(">", "&gt;")
+
+                    who = "%s<br><small><em>Uploader:</em> %s</small>" \
+                            % (who, u_who)
         else:
-            user = "&nbsp;"
+            who = "&nbsp;"
 
         print >>status, "<tr bgcolor=%s class=first>" % COLOURS[priority]
         print >>status, "<td><tt><a href=\"https://patches.ubuntu.com/" \
@@ -229,7 +265,7 @@ def do_table(status, merges, left_distro, right_distro, component):
               "+source/%s\">LP</a></sup>" % package
         print >>status, " <sup><a href=\"http://packages.qa.debian.org/" \
               "%s\">PTS</a></sup></td>" % package
-        print >>status, "<td colspan=2>%s</td>" % user
+        print >>status, "<td colspan=2>%s</td>" % who
         print >>status, "<td rowspan=2><form method=\"get\" action=\"addcomment.py\"><br />"
         print >>status, "<input type=\"hidden\" name=\"component\" value=\"%s\" />" % component
         print >>status, "<input type=\"hidden\" name=\"package\" value=\"%s\" />" % package
@@ -265,9 +301,9 @@ def write_status_file(component, merges, left_distro, right_distro):
     try:
         for uploaded, priority, package, user, uploader, source, \
                 base_version, left_version, right_version in merges:
-            print >>status, "%s %s %s %s %s, %s, %s" \
+            print >>status, "%s %s %s %s %s, %s, %s, %s" \
                   % (package, priority, base_version,
-                     left_version, right_version, user, uploader)
+                     left_version, right_version, user, uploader, uploaded)
     finally:
         status.close()
 
