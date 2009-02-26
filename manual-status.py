@@ -20,6 +20,7 @@
 import os
 import bz2
 
+from rfc822 import parseaddr
 from momlib import *
 
 
