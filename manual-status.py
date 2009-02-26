@@ -302,7 +302,7 @@ def write_status_file(component, merges, left_distro, right_distro):
     try:
         for uploaded, priority, package, user, uploader, source, \
                 left_version, right_version in merges:
-            print >>status, "%s %s %s %s %s, %s, %s, %s" \
+            print >>status, "%s %s %s %s, %s, %s, %s" \
                   % (package, priority, 
                      left_version, right_version, user, uploader, uploaded)
     finally:
