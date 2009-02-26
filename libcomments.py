@@ -18,8 +18,8 @@ def gen_buglink_from_comment(comment):
     debian = re.search(".*Debian bug #([0-9]{1,6}).*", comment, re.I)
     ubuntu = re.search(".*bug #([0-9]{1,6}).*", comment, re.I)
     if(debian):
-        return "<img src=\"debian.png\" alt=\"Debian\" /><a href=\"http://bugs.debian.org/%s\">#%s</a>" % (debian.group(1), debian.group(1))
+        return "<img src=\".img/debian.png\" alt=\"Debian\" /><a href=\"http://bugs.debian.org/%s\">#%s</a>" % (debian.group(1), debian.group(1))
     elif(ubuntu):
-        return "<img src=\"ubuntu.png\" alt=\"Ubuntu\" /><a href=\"https://launchpad.net/bugs/%s\">#%s</a>" % (ubuntu.group(1), ubuntu.group(1))
+        return "<img src=\".img/ubuntu.png\" alt=\"Ubuntu\" /><a href=\"https://launchpad.net/bugs/%s\">#%s</a>" % (ubuntu.group(1), ubuntu.group(1))
     else:
         return "&nbsp;"
