@@ -140,7 +140,7 @@ def main(options, args):
         merges.sort()
 
         write_status_page(our_component, merges, our_distro, src_distro)
-        remove_old_comments(our_component, merges, ROOT+'/merges/.comments')
+        remove_old_comments(our_component, merges, ROOT+'/.comments')
         write_status_file(our_component, merges, our_distro, src_distro)
 
 
@@ -225,7 +225,7 @@ def write_status_page(component, merges, left_distro, right_distro):
                          "like.</li>")
         print >>status, "</ul>"
 
-        print >>status, "<% comment = libcomments.get_comments(\""+ROOT+"/merges/.comments\") %>"
+        print >>status, "<% comment = libcomments.get_comments(\""+ROOT+"/.comments\") %>"
 
         for section in SECTIONS:
             section_merges = [ m for m in merges if m[0] == section ]
