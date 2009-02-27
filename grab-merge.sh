@@ -52,11 +52,11 @@ if [ "$RSYNC" = "y" ]; then
 	casey.ubuntu.com:/srv/patches.ubuntu.com/merges/$HASH/$MERGE/ .
 else
     rm -rf  *
-    wget -q http://merges.ubuntu.com/$HASH/$MERGE/REPORT
+    wget -q https://merges.ubuntu.com/$HASH/$MERGE/REPORT
 
     for NAME in $(sed -n -e "/^    /p" REPORT); do
 	echo "Getting $NAME..."
-	[ -f $NAME ] || wget -q http://merges.ubuntu.com/$HASH/$MERGE/$NAME
+	[ -f $NAME ] || wget -q https://merges.ubuntu.com/$HASH/$MERGE/$NAME
     done
 fi
 echo
