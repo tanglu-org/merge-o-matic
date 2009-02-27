@@ -21,6 +21,7 @@ import os
 import bz2
 import sys
 import glob
+import fcntl
 
 from rfc822 import parseaddr
 from momlib import *
@@ -355,11 +356,15 @@ def remove_old_comments(component, merges, comments):
             toremove.append(package)
     file_status.close()
 
-    file_comments = open(comments, "w")
-    for line in open(comments, "r").readlines():
+    file_comments = open(comments, "r")
+    file_comments_new = open(comments+".new", "w")
+    fcntl.lockf(file_comments, fcntl.LOCK_EX)
+    for line in file_comments.readlines():
         if line not in toremove:
-            file_comments.write(line)
+            file_comments_new.write(line)
     file_comments.close()
+    file_comments_new.close()
+    os.rename(comments+".new", comments)
 
 if __name__ == "__main__":
     run(main, options, usage="%prog",

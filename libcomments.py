@@ -1,10 +1,12 @@
 import re, string
+import fcntl
 
 def get_comments(file):
     """Extract the comments from file, and return a dictionary
        containing comments corresponding to packages"""
     comment = {}
     file_comments = open(file, "r")
+    fcntl.lockf(file_comments, fcntl.LOCK_SH)
     for line in file_comments.readlines():
         splitted = line.split(": ", 1)
         package = splitted[0]
