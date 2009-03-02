@@ -141,8 +141,10 @@ def main(options, args):
         merges.sort()
 
         write_status_page(our_component, merges, our_distro, src_distro)
-        remove_old_comments(our_component, merges, ROOT+'/.comments')
-        write_status_file(our_component, merges, our_distro, src_distro)
+
+        status_file = "%s/merges/tomerge-%s" % (ROOT, component)
+        remove_old_comments(status_file, merges)
+        write_status_file(status_file, merges, our_distro, src_distro)
 
 
 def get_uploader(distro, source):
@@ -203,7 +205,7 @@ def write_status_page(component, merges, left_distro, right_distro):
         print >>status, "    border-top: 2px solid white;"
         print >>status, "}"
         print >>status, "</style>"
-        print >>status, "<% import libcomments %>"
+        print >>status, "<% from momlib import * %>"
         print >>status, "</head>"
         print >>status, "<body>"
         print >>status, "<img src=\".img/ubuntulogo-100.png\" id=\"ubuntu\">"
@@ -226,7 +228,7 @@ def write_status_page(component, merges, left_distro, right_distro):
                          "like.</li>")
         print >>status, "</ul>"
 
-        print >>status, "<% comment = libcomments.get_comments(\""+ROOT+"/.comments\") %>"
+        print >>status, "<% comment = get_comments(\""+ROOT+"/.comments\") %>"
 
         for section in SECTIONS:
             section_merges = [ m for m in merges if m[0] == section ]
@@ -307,7 +309,7 @@ req.write(\"<input type=\\\"text\\\" style=\\\"border-style: none; background-co
         print >>status, "<td rowspan=2>"
         print >>status, "<%%\n\
 if(comment.has_key(\"%s\")):\n\
-    req.write(\"%%s\" %% libcomments.gen_buglink_from_comment(comment[\"%s\"]))\n\
+    req.write(\"%%s\" %% gen_buglink_from_comment(comment[\"%s\"]))\n\
 else:\n\
     req.write(\"&nbsp;\")\n\
 \n\
@@ -324,9 +326,8 @@ else:\n\
     print >>status, "</table>"
 
 
-def write_status_file(component, merges, left_distro, right_distro):
+def write_status_file(status_file, merges):
     """Write out the merge status file."""
-    status_file = "%s/merges/tomerge-%s" % (ROOT, component)
     status = open(status_file + ".new", "w")
     try:
         for uploaded, priority, package, user, uploader, source, \
@@ -338,33 +339,6 @@ def write_status_file(component, merges, left_distro, right_distro):
         status.close()
 
     os.rename(status_file + ".new", status_file)
-
-def remove_old_comments(component, merges, comments):
-    """Remove old comments from the comments file using
-       component's existing status file and merges"""
-
-    status = ROOT+"/merges/tomerge-"+component
-    if not os.path.isfile(status):
-        return
-
-    toremove = []
-
-    file_status = open(status, "r")
-    for line in file_status.readlines():
-        package = line.split(" ")[0]
-        if package not in [pkg[2] for pkg in merges]:
-            toremove.append(package)
-    file_status.close()
-
-    file_comments = open(comments, "r")
-    file_comments_new = open(comments+".new", "w")
-    fcntl.lockf(file_comments, fcntl.LOCK_EX)
-    for line in file_comments.readlines():
-        if line not in toremove:
-            file_comments_new.write(line)
-    file_comments.close()
-    file_comments_new.close()
-    os.rename(comments+".new", comments)
 
 if __name__ == "__main__":
     run(main, options, usage="%prog",

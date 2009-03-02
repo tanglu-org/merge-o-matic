@@ -18,13 +18,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import sys
 import md5
 import time
+import fcntl
 import errno
 import logging
 import datetime
 
+from cgi import escape
 from optparse import OptionParser
 
 from deb.controlfile import ControlFile
@@ -608,3 +611,93 @@ def append_rss(rss, title, link, author=None, filename=None):
             break
     else:
         channel.append(item)
+
+
+# --------------------------------------------------------------------------- #
+# Comments handling
+# --------------------------------------------------------------------------- #
+
+def comments_file():
+    """Return the location of the comments."""
+    return "%s/comments.txt" % ROOT
+
+def get_comments():
+    """Extract the comments from file, and return a dictionary
+        containing comments corresponding to packages"""
+    comments = {}
+
+    file_comments = open(comments_file(), "r")
+    try:
+        fcntl.lockf(file_comments, fcntl.LOCK_SH)
+        for line in file_comments:
+            package, comment = line.rstrip("\n").split(": ", 1)
+            comments[package] = comment
+    finally:
+        file_comments.close()
+
+    return comments
+
+def add_comment(package, comment):
+    """Add a comment to the comments file"""
+    file_comments = open(comments_file(), "a")
+    try:
+        fcntl.lockf(file_comments, fcntl.LOCK_EX)
+        the_comment = comment.replace("\n", " ")
+        the_comment = escape(the_comment[:100], quote=True)
+        file_comments.write("%s: %s\n" % (package, the_comment))
+    finally:
+        file_comments.close()
+
+def remove_old_comments(status_file, merges):
+    """Remove old comments from the comments file using
+       component's existing status file and merges"""
+    if not os.path.exists(status_file):
+        return
+
+    packages = [ m[2] for m in merges ]
+    toremove = []
+
+    file_status = open(status, "r")
+    try:
+        for line in file_status:
+            package = line.split(" ")[0]
+            if package not in packages:
+                toremove.append(package)
+    finally:
+        file_status.close()
+
+    file_comments = open(comments_file(), "r")
+    try:
+        fcntl.lockf(file_comments, fcntl.LOCK_EX)
+
+        os.link(comments_file(), comments_file() + ".new")
+        file_comments_new = open(comments + ".new", "w")
+        try:
+            for line in file_comments:
+                if line.split(": ", 1) not in toremove:
+                    file_comments_new.write(line)
+        finally:
+            file_comments_new.close()
+
+        os.rename(comments_file() + ".new", comments_file())
+    finally:
+        file_comments.close()
+
+def gen_buglink_from_comment(comment):
+    """Return an HTML formatted Debian/Ubuntu bug link from comment"""
+    debian = re.search(".*Debian bug #([0-9]{1,6}).*", comment, re.I)
+    ubuntu = re.search(".*bug #([0-9]{1,6}).*", comment, re.I)
+
+    html = ""
+    if debian:
+        html += "<img src=\".img/debian.png\" alt=\"Debian\" />"
+        html += "<a href=\"http://bugs.debian.org/%s\">#%s</a>" \
+            % (debian.group(1), debian.group(1))
+    elif ubuntu:
+        html += "<img src=\".img/ubuntu.png\" alt=\"Ubuntu\" />"
+        html += "<a href=\"https://launchpad.net/bugs/%s\">#%s</a>" \
+            % (ubuntu.group(1), ubuntu.group(1))
+    else:
+        html += "&nbsp;"
+
+    return html
