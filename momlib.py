@@ -678,7 +678,7 @@ def remove_old_comments(status_file, merges):
         file_comments.truncate(0)
 
         for line in new_lines:
-            file_comments_new.write(line)
+            file_comments.write(line)
     finally:
         file_comments.close()
 
