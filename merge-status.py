@@ -142,7 +142,7 @@ def main(options, args):
 
         write_status_page(our_component, merges, our_distro, src_distro)
 
-        status_file = "%s/merges/tomerge-%s" % (ROOT, component)
+        status_file = "%s/merges/tomerge-%s" % (ROOT, our_component)
         remove_old_comments(status_file, merges)
         write_status_file(status_file, merges, our_distro, src_distro)
 
