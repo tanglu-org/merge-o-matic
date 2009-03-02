@@ -657,7 +657,7 @@ def remove_old_comments(status_file, merges):
     packages = [ m[2] for m in merges ]
     toremove = []
 
-    file_status = open(status, "r")
+    file_status = open(status_file, "r")
     try:
         for line in file_status:
             package = line.split(" ")[0]
