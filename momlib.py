@@ -666,20 +666,19 @@ def remove_old_comments(status_file, merges):
     finally:
         file_status.close()
 
-    file_comments = open(comments_file(), "r")
+    file_comments = open(comments_file(), "a+")
     try:
         fcntl.flock(file_comments, fcntl.LOCK_EX)
 
-        os.link(comments_file(), comments_file() + ".new")
-        file_comments_new = open(comments_file() + ".new", "w")
-        try:
-            for line in file_comments:
-                if line.split(": ", 1) not in toremove:
-                    file_comments_new.write(line)
-        finally:
-            file_comments_new.close()
+        new_lines = []
+        for line in file_comments:
+            if line.split(": ", 1) not in toremove:
+                new_lines.append(line)
 
-        os.rename(comments_file() + ".new", comments_file())
+        file_comments.truncate(0)
+
+        for line in new_lines:
+            file_comments_new.write(line)
     finally:
         file_comments.close()
 
