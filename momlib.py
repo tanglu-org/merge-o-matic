@@ -628,7 +628,7 @@ def get_comments():
 
     file_comments = open(comments_file(), "r")
     try:
-        fcntl.lockf(file_comments.fileno(), fcntl.LOCK_SH)
+        fcntl.flock(file_comments, fcntl.LOCK_SH)
         for line in file_comments:
             package, comment = line.rstrip("\n").split(": ", 1)
             comments[package] = comment
@@ -641,7 +641,7 @@ def add_comment(package, comment):
     """Add a comment to the comments file"""
     file_comments = open(comments_file(), "a")
     try:
-        fcntl.lockf(file_comments.fileno(), fcntl.LOCK_EX)
+        fcntl.flock(file_comments, fcntl.LOCK_EX)
         the_comment = comment.replace("\n", " ")
         the_comment = escape(the_comment[:100], quote=True)
         file_comments.write("%s: %s\n" % (package, the_comment))
@@ -668,7 +668,7 @@ def remove_old_comments(status_file, merges):
 
     file_comments = open(comments_file(), "r")
     try:
-        fcntl.lockf(file_comments.fileno(), fcntl.LOCK_EX)
+        fcntl.flock(file_comments, fcntl.LOCK_EX)
 
         os.link(comments_file(), comments_file() + ".new")
         file_comments_new = open(comments + ".new", "w")
