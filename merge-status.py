@@ -144,7 +144,7 @@ def main(options, args):
 
         status_file = "%s/merges/tomerge-%s" % (ROOT, our_component)
         remove_old_comments(status_file, merges)
-        write_status_file(status_file, merges, our_distro, src_distro)
+        write_status_file(status_file, merges)
 
 
 def get_uploader(distro, source):
