@@ -57,6 +57,30 @@ DISTROS = {
         "components": [ "main", "contrib", "non-free" ],
         "expire": True,
         },
+    "dapper-security": {
+        "mirror": "http://security.ubuntu.com/ubuntu",
+        "dists": [ "dapper-security" ],
+        "components": [ "main", "restricted", "universe", "multiverse" ],
+        "expire": False,
+        },
+    "hardy-security": {
+        "mirror": "http://security.ubuntu.com/ubuntu",
+        "dists": [ "hardy-security" ],
+        "components": [ "main", "restricted", "universe", "multiverse" ],
+        "expire": False,
+        },
+    "intrepid-security": {
+        "mirror": "http://security.ubuntu.com/ubuntu",
+        "dists": [ "intrepid-security" ],
+        "components": [ "main", "restricted", "universe", "multiverse" ],
+        "expire": False,
+        },
+    "jaunty-security": {
+        "mirror": "http://security.ubuntu.com/ubuntu",
+        "dists": [ "jaunty-security" ],
+        "components": [ "main", "restricted", "universe", "multiverse" ],
+        "expire": False,
+        },
     }
 
 # Destination distribution and release

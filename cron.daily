@@ -43,7 +43,7 @@ wget -q -O/srv/patches.ubuntu.com/sync-blacklist.txt http://people.ubuntu.com/~u
 # mvo: 20070802 commented out debian-security, this caused a key error
 #      early. I hope this helps
 #./update-pool.py $QUIET debian debian-security ubuntu
-./update-pool.py $QUIET debian ubuntu
+./update-pool.py $QUIET debian ubuntu dapper-security hardy-security intrepid-security jaunty-security
 
 # Update the Sources files against new packages that have been downloaded.
 ./update-sources.py $QUIET
