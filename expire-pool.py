@@ -38,7 +38,8 @@ def main(options, args):
             logging.debug("base is %s", base)
 
             for distro in distros:
-                expire_pool_sources(distro, source["Package"], base)
+                if DISTROS[distro]["expire"]:
+                    expire_pool_sources(distro, source["Package"], base)
 
 
 def expire_pool_sources(distro, package, base):

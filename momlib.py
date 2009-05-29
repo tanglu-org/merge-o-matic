@@ -49,11 +49,13 @@ DISTROS = {
         "mirror": "http://archive.ubuntu.com/ubuntu",
         "dists": [ "karmic" ],
         "components": [ "main", "restricted", "universe", "multiverse" ],
+        "expire": True,
         },
     "debian": {
         "mirror": "http://ftp.uk.debian.org/debian",
         "dists": [ "unstable", "experimental" ],
         "components": [ "main", "contrib", "non-free" ],
+        "expire": True,
         },
     }
 
