@@ -108,5 +108,5 @@ def update_pool(distro, source):
 
 
 if __name__ == "__main__":
-    run(main, usage="%prog [DISTRO...]",
+    run(main, options, usage="%prog [DISTRO...]",
         description="update a distribution's pool")
