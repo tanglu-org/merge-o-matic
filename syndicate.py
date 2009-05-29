@@ -167,6 +167,13 @@ def mail_diff(distro, last, this, uploader, subscriptions):
 This e-mail has been sent due to an upload to Debian, and contains the
 difference between the new version and the previous one.""")
         payload = diff_part(distro, this)
+    elif distro != OUR_DISTRO:
+        # Other uploads always just have a diff
+        subject = "%s %s %s" % (distro, this["Package"], this["Version"])
+        intro = MIMEText("""\
+This e-mail has been sent due to an upload to %s, and contains the
+difference between the new version and the previous one.""" % distro)
+        payload = diff_part(distro, this)
     elif get_base(this) == this["Version"]:
         # Never e-mail ubuntu uploads without local changes
         return
