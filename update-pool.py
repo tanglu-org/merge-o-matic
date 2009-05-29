@@ -27,6 +27,11 @@ from momlib import *
 from util import tree
 
 
+def options(parser):
+    parser.add_option("-p", "--package", type="string", metavar="PACKAGE",
+                      action="append",
+                      help="Process only theses packages")
+
 def main(options, args):
     if len(args):
         distros = args
@@ -42,6 +47,9 @@ def main(options, args):
 
                 sources = get_sources(distro, dist, component)
                 for source in sources:
+                    if options.package is not None \
+                           and source["Package"] not in options.package:
+                        continue
                     update_pool(distro, source)
 
 
