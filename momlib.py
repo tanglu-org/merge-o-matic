@@ -41,7 +41,7 @@ except ImportError:
 
 
 # Output root
-ROOT = "/tmp/patches.ubuntu.com"
+ROOT = "/srv/patches.ubuntu.com"
 
 # Distribution definitions
 DISTROS = {
