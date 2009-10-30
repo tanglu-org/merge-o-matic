@@ -47,49 +47,49 @@ ROOT = "/srv/patches.ubuntu.com"
 DISTROS = {
     "ubuntu": {
         "mirror": "http://archive.ubuntu.com/ubuntu",
-        "dists": [ "karmic" ],
+        "dists": [ "lucid" ],
         "components": [ "main", "restricted", "universe", "multiverse" ],
         "expire": True,
         },
     "debian": {
         "mirror": "http://ftp.uk.debian.org/debian",
-        "dists": [ "unstable", "experimental" ],
+        "dists": [ "unstable", "testing", "experimental" ],
         "components": [ "main", "contrib", "non-free" ],
         "expire": True,
         },
-    "dapper-security": {
-        "mirror": "http://security.ubuntu.com/ubuntu",
-        "dists": [ "dapper-security" ],
-        "components": [ "main", "restricted", "universe", "multiverse" ],
-        "expire": False,
-        },
-    "hardy-security": {
-        "mirror": "http://security.ubuntu.com/ubuntu",
-        "dists": [ "hardy-security" ],
-        "components": [ "main", "restricted", "universe", "multiverse" ],
-        "expire": False,
-        },
-    "intrepid-security": {
-        "mirror": "http://security.ubuntu.com/ubuntu",
-        "dists": [ "intrepid-security" ],
-        "components": [ "main", "restricted", "universe", "multiverse" ],
-        "expire": False,
-        },
-    "jaunty-security": {
-        "mirror": "http://security.ubuntu.com/ubuntu",
-        "dists": [ "jaunty-security" ],
-        "components": [ "main", "restricted", "universe", "multiverse" ],
-        "expire": False,
-        },
+#    "dapper-security": {
+#        "mirror": "http://security.ubuntu.com/ubuntu",
+#        "dists": [ "dapper-security" ],
+#        "components": [ "main", "restricted", "universe", "multiverse" ],
+#        "expire": False,
+#        },
+#    "hardy-security": {
+#        "mirror": "http://security.ubuntu.com/ubuntu",
+#        "dists": [ "hardy-security" ],
+#        "components": [ "main", "restricted", "universe", "multiverse" ],
+#        "expire": False,
+#        },
+#    "intrepid-security": {
+#        "mirror": "http://security.ubuntu.com/ubuntu",
+#        "dists": [ "intrepid-security" ],
+#        "components": [ "main", "restricted", "universe", "multiverse" ],
+#        "expire": False,
+#        },
+#    "jaunty-security": {
+#        "mirror": "http://security.ubuntu.com/ubuntu",
+#        "dists": [ "jaunty-security" ],
+#        "components": [ "main", "restricted", "universe", "multiverse" ],
+#        "expire": False,
+#        },
     }
 
 # Destination distribution and release
 OUR_DISTRO = "ubuntu"
-OUR_DIST   = "karmic"
+OUR_DIST   = "lucid"
 
 # Default source distrbution and release
 SRC_DISTRO = "debian"
-SRC_DIST   = "unstable"
+SRC_DIST   = "testing"
 
 
 # Time format for RSS feeds
