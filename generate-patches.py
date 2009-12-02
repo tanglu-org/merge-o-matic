@@ -58,6 +58,8 @@ def main(options, args):
     our_distro = options.dest_distro
     our_dist = options.dest_suite
 
+    blacklist = read_blacklist()
+
     # For each package in the destination distribution, locate the latest in
     # the source distribution; calculate the base from the destination and
     # create patches from that to both
@@ -69,6 +71,8 @@ def main(options, args):
         for our_source in get_sources(our_distro, our_dist, our_component):
             if options.package is not None \
                    and our_source["Package"] not in options.package:
+                continue
+            if our_source["Package"] in blacklist:
                 continue
 
             if search(".*build[1-9]+$", our_source["Version"]):
