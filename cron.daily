@@ -32,7 +32,7 @@ else
 fi
 
 cd /srv/patches.ubuntu.com/code
-bzr update
+#bzr update
 
 cp addcomment.py /srv/patches.ubuntu.com/merges
 
