@@ -26,6 +26,7 @@ import fcntl
 import errno
 import logging
 import datetime
+import stat
 
 from cgi import escape
 from optparse import OptionParser
@@ -446,6 +447,14 @@ def unpack_source(source):
     ensure(destdir)
     try:
         shell.run(("dpkg-source", "-x", dsc_file, destdir), chdir=srcdir)
+        # Make sure we can at least read everything under .pc, which isn't
+        # automatically true with dpkg-dev 1.15.4.
+        pc_dir = os.path.join(destdir, ".pc")
+        for filename in tree.walk(pc_dir):
+            pc_filename = os.path.join(pc_dir, filename)
+            pc_stat = os.lstat(pc_filename)
+            if pc_stat is not None and stat.S_IMODE(pc_stat.st_mode) == 0:
+                os.chmod(pc_filename, 0400)
     except:
         cleanup(destdir)
         raise

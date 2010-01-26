@@ -235,6 +235,10 @@ def do_merge(left_dir, left_name, left_distro, base_dir,
     # Look for files in the base and merge them if they're in both new
     # files (removed files get removed)
     for filename in tree.walk(base_dir):
+        if tree.under(".pc", filename):
+            # Not interested in merging quilt metadata
+            continue
+
         base_stat = os.lstat("%s/%s" % (base_dir, filename))
 
         try:
@@ -305,6 +309,10 @@ def do_merge(left_dir, left_name, left_distro, base_dir,
     # Look for files in the left hand side that aren't in the base,
     # conflict if new on both sides or copy into the tree
     for filename in tree.walk(left_dir):
+        if tree.under(".pc", filename):
+            # Not interested in merging quilt metadata
+            continue
+
         if tree.exists("%s/%s" % (base_dir, filename)):
             continue
 
@@ -338,6 +346,10 @@ def do_merge(left_dir, left_name, left_distro, base_dir,
 
     # Copy new files on the right hand side only into the tree
     for filename in tree.walk(right_dir):
+        if tree.under(".pc", filename):
+            # Not interested in merging quilt metadata
+            continue
+
         if tree.exists("%s/%s" % (base_dir, filename)):
             continue
 
