@@ -127,7 +127,7 @@ class Version(object):
 
 
 def strcut(str, idx, accept):
-    """Cut characters from str that are entirely in accept."""
+    """Cut characters from string that are entirely in accept."""
     ret = ""
     while idx < len(str) and str[idx] in accept:
         ret += str[idx]
