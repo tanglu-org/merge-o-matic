@@ -48,7 +48,7 @@ ROOT = "/srv/patches.ubuntu.com"
 DISTROS = {
     "ubuntu": {
         "mirror": "http://archive.ubuntu.com/ubuntu",
-        "dists": [ "lucid" ],
+        "dists": [ "maverick" ],
         "components": [ "main", "restricted", "universe", "multiverse" ],
         "expire": True,
         },
@@ -86,9 +86,9 @@ DISTROS = {
 
 # Destination distribution and release
 OUR_DISTRO = "ubuntu"
-OUR_DIST   = "lucid"
+OUR_DIST   = "maverick"
 
-# Default source distrbution and release
+# Default source distribution and release
 SRC_DISTRO = "debian"
 SRC_DIST   = "testing"
 
