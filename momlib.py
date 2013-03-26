@@ -48,55 +48,31 @@ except ImportError:
 
 
 # Output root
-ROOT = "/srv/patches.ubuntu.com"
+ROOT = "/srv/patches.tanglu.org"
 
 # Distribution definitions
 DISTROS = {
-    "ubuntu": {
-        "mirror": "http://archive.ubuntu.com/ubuntu",
-        "dists": [ "raring" ],
-        "components": [ "main", "restricted", "universe", "multiverse" ],
+    "tanglu": {
+        "mirror": "http://archive.tanglu.org/tanglu",
+        "dists": [ "aequorea" ],
+        "components": [ "main", "contrib", "non-free" ],
         "expire": True,
         },
     "debian": {
-        "mirror": "http://ftp.uk.debian.org/debian",
+        "mirror": "http://ftp.de.debian.org/debian",
         "dists": [ "unstable", "testing", "testing-proposed-updates", "experimental" ],
         "components": [ "main", "contrib", "non-free" ],
         "expire": True,
         },
-#    "dapper-security": {
-#        "mirror": "http://security.ubuntu.com/ubuntu",
-#        "dists": [ "dapper-security" ],
-#        "components": [ "main", "restricted", "universe", "multiverse" ],
-#        "expire": False,
-#        },
-#    "hardy-security": {
-#        "mirror": "http://security.ubuntu.com/ubuntu",
-#        "dists": [ "hardy-security" ],
-#        "components": [ "main", "restricted", "universe", "multiverse" ],
-#        "expire": False,
-#        },
-#    "intrepid-security": {
-#        "mirror": "http://security.ubuntu.com/ubuntu",
-#        "dists": [ "intrepid-security" ],
-#        "components": [ "main", "restricted", "universe", "multiverse" ],
-#        "expire": False,
-#        },
-#    "jaunty-security": {
-#        "mirror": "http://security.ubuntu.com/ubuntu",
-#        "dists": [ "jaunty-security" ],
-#        "components": [ "main", "restricted", "universe", "multiverse" ],
-#        "expire": False,
-#        },
     }
 
 # Destination distribution and release
-OUR_DISTRO = "ubuntu"
-OUR_DIST   = "raring"
+OUR_DISTRO = "tanglu"
+OUR_DIST   = "aequorea"
 
 # Default source distribution and release
 SRC_DISTRO = "debian"
-SRC_DIST   = "unstable"
+SRC_DIST   = "testing"
 
 
 # Time format for RSS feeds
@@ -417,7 +393,7 @@ def get_base(source, slip=False):
 
     version = source["Version"]
     version = strip_suffix(version, "build")
-    version = strip_suffix(version, "ubuntu")
+    version = strip_suffix(version, "tanglu")
 
     if version.endswith("-"):
         version += "0"
@@ -725,17 +701,17 @@ def remove_old_comments(status_file, merges):
 def gen_buglink_from_comment(comment):
     """Return an HTML formatted Debian/Ubuntu bug link from comment"""
     debian = re.search(".*Debian bug #([0-9]{1,}).*", comment, re.I)
-    ubuntu = re.search(".*bug #([0-9]{1,}).*", comment, re.I)
+    tanglu = re.search(".*bug #([0-9]{1,}).*", comment, re.I)
 
     html = ""
     if debian:
         html += "<img src=\".img/debian.png\" alt=\"Debian\" />"
         html += "<a href=\"http://bugs.debian.org/%s\">#%s</a>" \
             % (debian.group(1), debian.group(1))
-    elif ubuntu:
-        html += "<img src=\".img/ubuntu.png\" alt=\"Ubuntu\" />"
-        html += "<a href=\"https://launchpad.net/bugs/%s\">#%s</a>" \
-            % (ubuntu.group(1), ubuntu.group(1))
+    elif tanglu:
+        html += "<img src=\".img/tanglu.png\" alt=\"Tanglu\" />"
+        html += "<a href=\"http://bugs.tanglu.org/ticket/%s\">#%s</a>" \
+            % (tanglu.group(1), tanglu.group(1))
     else:
         html += "&nbsp;"
 
