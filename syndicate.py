@@ -52,18 +52,18 @@ def main(options, args):
     subscriptions = read_subscriptions()
 
     patch_rss = read_rss(patch_rss_file(),
-                         title="Ubuntu Patches from Debian",
-                         link="http://patches.ubuntu.com/",
+                         title="Tanglu Patches from Debian",
+                         link="http://patches.tanglu.org/",
                          description="This feed announces new patches from "
-                         "Ubuntu to Debian, each patch filename contains "
+                         "Tanglu to Debian, each patch filename contains "
                          "the complete difference between the two "
                          "distributions for that package.")
 
     diff_rss = read_rss(diff_rss_file(),
-                        title="Ubuntu Uploads",
-                        link="http://patches.ubuntu.com/by-release/atomic/",
+                        title="Tanglu Uploads",
+                        link="http://patches.tanglu.org/by-release/atomic/",
                         description="This feed announces new changes in "
-                        "Ubuntu, each patch filename contains the difference "
+                        "Tanglu, each patch filename contains the difference "
                         "between the new version and the previous one.")
 
 
@@ -92,21 +92,21 @@ def main(options, args):
                         continue
 
                     this_patch_rss = read_rss(patch_rss_file(distro, source),
-                                             title="Ubuntu Patches from Debian for %s" % source["Package"],
-                                             link=("http://patches.ubuntu.com/by-release/" +
+                                             title="Tanglu Patches from Debian for %s" % source["Package"],
+                                             link=("http://patches.tanglu.org/by-release/" +
                                                    tree.subdir("%s/patches" % ROOT,
                                                                patch_directory(distro, source))),
                                               description="This feed announces new patches from "
-                                              "Ubuntu to Debian for %s, each patch filename contains "
+                                              "Tanglu to Debian for %s, each patch filename contains "
                                               "the complete difference between the two "
                                               "distributions for that package." % source["Package"])
                     this_diff_rss = read_rss(diff_rss_file(distro, source),
-                                             title="Ubuntu Uploads for %s" % source["Package"],
-                                             link=("http://patches.ubuntu.com/by-release/atomic/" +
+                                             title="Tanglu Uploads for %s" % source["Package"],
+                                             link=("http://patches.tanglu.org/by-release/atomic/" +
                                                    tree.subdir("%s/diffs" % ROOT,
                                                                diff_directory(distro, source))),
                                              description="This feed announces new changes in "
-                                             "Ubuntu for %s, each patch filename contains the "
+                                             "Tanglu for %s, each patch filename contains the "
                                              "difference between the new version and the "
                                              "previous one." % source["Package"])
 
@@ -182,33 +182,33 @@ This e-mail has been sent due to an upload to %s, and contains the
 difference between the new version and the previous one.""" % distro)
         payload = diff_part(distro, this)
     elif get_base(this) == this["Version"]:
-        # Never e-mail ubuntu uploads without local changes
+        # Never e-mail tanglu uploads without local changes
         return
     elif last is None:
-        # Initial ubuntu uploads, send the patch
-        subject = "Ubuntu (new) %s %s" % (this["Package"], this["Version"])
+        # Initial tanglu uploads, send the patch
+        subject = "Tanglu (new) %s %s" % (this["Package"], this["Version"])
         intro = MIMEText("""\
-This e-mail has been sent due to an upload to Ubuntu of a new source package
-which already contains Ubuntu changes.  It contains the difference between
-the Ubuntu version and the equivalent base version in Debian.""")
+This e-mail has been sent due to an upload to Tanglu of a new source package
+which already contains Tanglu changes.  It contains the difference between
+the Tanglu version and the equivalent base version in Debian.""")
         payload = patch_part(distro, this)
     elif get_base(last) != get_base(this):
-        # Ubuntu changed upstream version, send the patech
-        subject = "Ubuntu (new upstream) %s %s"\
+        # Tanglu changed upstream version, send the patech
+        subject = "Tanglu (new upstream) %s %s"\
                   % (this["Package"], this["Version"])
         intro = MIMEText("""\
-This e-mail has been sent due to an upload to Ubuntu of a new upstream
-version which still contains Ubuntu changes.  It contains the difference
-between the Ubuntu version and the equivalent base version in Debian, note
+This e-mail has been sent due to an upload to Tanglu of a new upstream
+version which still contains Tanglu changes.  It contains the difference
+between the Tanglu version and the equivalent base version in Debian, note
 that this difference may include the upstream changes.""")
         payload = patch_part(distro, this)
     else:
-        # Ubuntu revision, send the diff
-        subject = "Ubuntu %s %s" % (this["Package"], this["Version"])
+        # Tanglu revision, send the diff
+        subject = "Tanglu %s %s" % (this["Package"], this["Version"])
         intro = MIMEText("""\
-This e-mail has been sent due to an upload to Ubuntu that contains Ubuntu
+This e-mail has been sent due to an upload to Tanglu that contains Tanglu
 changes.  It contains the difference between the new version and the
-previous version of the same source package in Ubuntu.""")
+previous version of the same source package in Tanglu.""")
         payload = diff_part(distro, this)
 
     # Allow patches to be missing (no Debian version)
@@ -226,12 +226,12 @@ previous version of the same source package in Ubuntu.""")
 
     # Build up the message
     message = MIMEMultipart()
-    message.add_header("From", "Ubuntu Merge-o-Matic <mom@ubuntu.com>")
-    message.add_header("To", "Ubuntu Merge-o-Matic <mom@ubuntu.com>")
+    message.add_header("From", "Tanglu Merge-o-Matic <mom@tanglu.org>")
+    message.add_header("To", "Tanglu Merge-o-Matic <mom@tanglu.org>")
     message.add_header("Date", formatdate())
     message.add_header("Subject", subject)
     message.add_header("Message-ID", make_msgid())
-    message.add_header("X-Your-Mom", "mom.ubuntu.com %s" % this["Package"])
+    message.add_header("X-Your-Mom", "mom.tanglu.org %s" % this["Package"])
     message.add_header("X-PTS-Approved", "yes")
     message.attach(intro)
     message.attach(changes)
@@ -311,7 +311,7 @@ def send_message(message, recipients):
         message.replace_header("To", addr)
 
         try:
-            smtp.sendmail("mom@ubuntu.com", env_addr , message.as_string())
+            smtp.sendmail("mom@tanglu.org", env_addr , message.as_string())
         except (SMTPSenderRefused, SMTPDataError):
             logging.exception("smtp failed")
             smtp = SMTP("localhost")
@@ -339,14 +339,14 @@ def update_feeds(distro, last, this, uploader, patch_rss, this_patch_rss,
     if patch_filename is not None:
         append_rss(patch_rss,
                    title=os.path.basename(patch_filename),
-                   link=("http://patches.ubuntu.com/by-release/" +
+                   link=("http://patches.tanglu.org/by-release/" +
                          tree.subdir("%s/patches" % ROOT, patch_filename)),
                    author=uploader,
                    filename=patch_filename)
 
         append_rss(this_patch_rss,
                    title=os.path.basename(patch_filename),
-                   link=("http://patches.ubuntu.com/by-release/" +
+                   link=("http://patches.tanglu.org/by-release/" +
                          tree.subdir("%s/patches" % ROOT, patch_filename)),
                    author=uploader,
                    filename=patch_filename)
@@ -362,14 +362,14 @@ def update_feeds(distro, last, this, uploader, patch_rss, this_patch_rss,
     if diff_filename is not None:
         append_rss(diff_rss,
                    title=os.path.basename(diff_filename),
-                   link=("http://patches.ubuntu.com/by-release/atomic/" +
+                   link=("http://patches.tanglu.org/by-release/atomic/" +
                          tree.subdir("%s/diffs" % ROOT, diff_filename)),
                    author=uploader,
                    filename=diff_filename)
 
         append_rss(this_diff_rss,
                    title=os.path.basename(diff_filename),
-                   link=("http://patches.ubuntu.com/by-release/atomic/" +
+                   link=("http://patches.tanglu.org/by-release/atomic/" +
                          tree.subdir("%s/diffs" % ROOT, diff_filename)),
                    author=uploader,
                    filename=diff_filename)

@@ -41,8 +41,8 @@ SEVERITY = [ "unknown", "critical", "grave", "serious", "important", "normal",
              "minor", "wishlist" ]
 
 # Who to send to
-RECIPIENTS = [ "ubuntu-archive@lists.ubuntu.com",
-               "ubuntu-devel@lists.ubuntu.com" ]
+RECIPIENTS = [ "tanglu-archive@lists.tanglu.org",
+               "tanglu-devel@lists.tanglu.org" ]
 
 
 def options(parser):
@@ -180,8 +180,8 @@ def mail_closures(bugs):
         text += "\n"
 
     message = MIMEText(text)
-    message.add_header("From", "Ubuntu Merge-o-Matic <mom@ubuntu.com>")
-    message.add_header("To", "Ubuntu Merge-o-Matic <mom@ubuntu.com>")
+    message.add_header("From", "Tanglu Merge-o-Matic <mom@tanglu.org>")
+    message.add_header("To", "Tanglu Merge-o-Matic <mom@tanglu.org>")
     message.add_header("Date", formatdate())
     message.add_header("Subject", "Bugs closed in Debian")
     message.add_header("Message-ID", make_msgid())
@@ -196,7 +196,7 @@ def send_message(message, recipients):
         logging.debug("Sending to %s", addr)
         message.replace_header("To", addr)
 
-        smtp.sendmail("mom@ubuntu.com", addr , message.as_string())
+        smtp.sendmail("mom@tanglu.org", addr , message.as_string())
 
     smtp.quit()
 

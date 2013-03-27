@@ -150,10 +150,10 @@ def write_status_page(component, merges, left_distro, right_distro):
         print(file=status)
         print("<head>", file=status)
         print("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">", file=status)
-        print("<title>Ubuntu Merge-o-Matic: %s manual</title>" % component,
+        print("<title>Tanglu Merge-o-Matic: %s manual</title>" % component,
               file=status)
         print("<style>", file=status)
-        print("img#ubuntu {", file=status)
+        print("img#tanglu {", file=status)
         print("    border: 0;", file=status)
         print("}", file=status)
         print("h1 {", file=status)
@@ -183,9 +183,9 @@ def write_status_page(component, merges, left_distro, right_distro):
         print("<% from momlib import * %>", file=status)
         print("</head>", file=status)
         print("<body>", file=status)
-        print("<img src=\".img/ubuntulogo-100.png\" id=\"ubuntu\">",
+        print("<img src=\".img/tanglulogo-100.png\" id=\"tanglu\">",
               file=status)
-        print("<h1>Ubuntu Merge-o-Matic: %s manual</h1>" % component,
+        print("<h1>Tanglu Merge-o-Matic: %s manual</h1>" % component,
               file=status)
 
         for section in SECTIONS:
@@ -220,7 +220,7 @@ def get_uploader(distro, source):
         return None
 
     filename = "%s/pool/%s/%s/%s/%s" \
-            % (ROOT, distro, pathhash(source["Package"]), source["Package"], 
+            % (ROOT, distro, pathhash(source["Package"]), source["Package"],
                dsc_file)
 
     (a, b, c) = os.popen3("gpg --verify %s" % filename)
@@ -268,7 +268,7 @@ def do_table(status, merges, left_distro, right_distro, component):
             who = "&nbsp;"
 
         print("<tr bgcolor=%s class=first>" % COLOURS[priority], file=status)
-        print("<td><tt><a href=\"https://patches.ubuntu.com/" \
+        print("<td><tt><a href=\"https://patches.tanglu.org/" \
               "%s/%s/%s_%s.patch\">%s</a></tt>" \
               % (pathhash(package), package, package, left_version, package),
               file=status)
@@ -313,7 +313,7 @@ def write_status_json(component, merges, left_distro, right_distro):
     """Write out the merge status JSON dump."""
     status_file = "%s/merges/%s-manual.json" % (ROOT, component)
     with open(status_file + ".new", "w") as status:
-        # No json module available on merges.ubuntu.com right now, but it's
+        # No json module available on merges.tanglu.org right now, but it's
         # not that hard to do it ourselves.
         print('[', file=status)
         cur_merge = 0
@@ -325,7 +325,7 @@ def write_status_json(component, merges, left_distro, right_distro):
             print('"source_package": "%s",' % package, end=' ', file=status)
             print('"short_description": "merge %s",' % right_version,
                   end=' ', file=status)
-            print('"link": "https://merges.ubuntu.com/%s/%s/",' %
+            print('"link": "https://merges.tanglu.org/%s/%s/",' %
                   (pathhash(package), package), end=' ', file=status)
             print('"uploaded": "%s",' % uploaded, end=' ', file=status)
             print('"priority": "%s",' % priority, end=' ', file=status)

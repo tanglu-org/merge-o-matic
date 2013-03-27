@@ -147,7 +147,7 @@ def produce_merge(left_source, left_distro, left_dist, base_source,
                   right_source, right_distro, right_dist, force=False):
     """Produce a merge for the given two packages."""
     package = base_source["Package"]
-    merged_version = Version(right_source["Version"] + "ubuntu1")
+    merged_version = Version(right_source["Version"] + "tanglu1")
     output_dir = result_dir(package)
 
     if re.search(".*build[0-9]+$", left_source["Version"]):
@@ -699,7 +699,7 @@ def add_changelog(package, merged_version, left_distro, left_dist,
                   % (right_distro.title(), right_dist), file=new_changelog)
             print("    - SUMMARISE HERE", file=new_changelog)
             print(file=new_changelog)
-            print(" -- Ubuntu Merge-o-Matic <mom@ubuntu.com>  " +
+            print(" -- Tanglu Merge-o-Matic <mom@tanglu.org>  " +
                   time.strftime("%a, %d %b %Y %H:%M:%S %z"),
                   file=new_changelog)
             print(file=new_changelog)
