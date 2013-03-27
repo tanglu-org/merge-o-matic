@@ -60,7 +60,7 @@ DISTROS = {
         },
     "debian": {
         "mirror": "http://ftp.de.debian.org/debian",
-        "dists": [ "unstable", "testing", "testing-proposed-updates", "experimental" ],
+        "dists": [ "unstable", "testing", "experimental" ],
         "components": [ "main", "contrib", "non-free" ],
         "expire": True,
         },
