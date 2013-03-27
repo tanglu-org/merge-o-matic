@@ -24,23 +24,20 @@ if [ "$DEBUG" = "y" ]; then
 else
 	QUIET="-q"
 
-	if ! mkdir /srv/patches.ubuntu.com/.lock 2>/dev/null; then
+	if ! mkdir /srv/patches.tanglu.org/.lock 2>/dev/null; then
 		echo "LOCKED (another one running?)"
 		exit 1
 	fi
-	trap "rmdir /srv/patches.ubuntu.com/.lock" 0
+	trap "rmdir /srv/patches.tanglu.org/.lock" 0
 fi
 
-cd /srv/patches.ubuntu.com/code
+cd /srv/patches.tanglu.org/code
 #bzr update
 
-cp addcomment.py /srv/patches.ubuntu.com/merges
-
-# Update the blacklist
-wget -q -O/srv/patches.ubuntu.com/sync-blacklist.txt http://people.canonical.com/~ubuntu-archive/sync-blacklist.txt
+cp addcomment.py /srv/patches.tanglu.org/merges
 
 # Download new packages
-./update-pool.py $QUIET debian ubuntu
+./update-pool.py $QUIET debian tanglu
 
 # Update the Sources files against new packages that have been downloaded.
 ./update-sources.py $QUIET
@@ -50,7 +47,7 @@ wget -q -O/srv/patches.ubuntu.com/sync-blacklist.txt http://people.canonical.com
 ./generate-patches.py $QUIET
 ./generate-dpatches.py $QUIET
 
-# Publish the Ubuntu patches so that Debian people can get at them
+# Publish the Tanglu patches so that Debian people can get at them
 ./publish-patches.py $QUIET
 ./syndicate.py $QUIET
 # ./mail-bugs.py $QUIET
@@ -71,4 +68,4 @@ wget -q -O/srv/patches.ubuntu.com/sync-blacklist.txt http://people.canonical.com
 ./expire-pool.py $QUIET
 
 # ?! untidy
-rm -rf /srv/patches.ubuntu.com/unpacked/*
+rm -rf /srv/patches.tanglu.org/unpacked/*
