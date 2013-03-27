@@ -31,8 +31,8 @@ else
 	trap "rmdir /srv/patches.tanglu.org/.lock" 0
 fi
 
-MOMDIR = "/var/archive-kit/merge-o-matic"
-WORKDIR = "/srv/patches.tanglu.org"
+MOMDIR="/var/archive-kit/merge-o-matic"
+WORKDIR="/srv/patches.tanglu.org"
 
 cd $MOMDIR
 #bzr update
@@ -56,8 +56,8 @@ cp addcomment.py /srv/patches.tanglu.org/merges
 # ./mail-bugs.py $QUIET
 
 # Run the merge tool
-./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIRexperimental.txt -X $WORKDIRunstable.txt -X $WORKDIRtesting-proposed-updates.txt
-./produce-merges.py -X $WORKDIRmerge-blacklist.txt -X $WORKDIRexperimental.txt -I $WORKDIRunstable.txt -X $WORKDIRtesting-proposed-updates.txt -S unstable
+./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIR/experimental.txt -X $WORKDIR/unstable.txt -X $WORKDIR/testing-proposed-updates.txt
+./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIR/experimental.txt -I $WORKDIR/unstable.txt -X $WORKDIR/testing-proposed-updates.txt -S unstable
 
 # Produce pretty reports
 ./stats.py $QUIET
