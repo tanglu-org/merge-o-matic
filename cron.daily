@@ -39,6 +39,9 @@ cd $MOMDIR
 
 cp addcomment.py /srv/patches.tanglu.org/merges
 
+# Update the blacklist
+wget -q -O/srv/patches.tanglu.org/sync-blacklist.txt http://gitorious.org/tanglu/import-blacklist/blobs/raw/master/sync-blacklist.txt
+
 # Download new packages
 ./update-pool.py $QUIET debian tanglu
 
@@ -56,8 +59,8 @@ cp addcomment.py /srv/patches.tanglu.org/merges
 # ./mail-bugs.py $QUIET
 
 # Run the merge tool
-./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIR/experimental.txt -X $WORKDIR/unstable.txt -X $WORKDIR/testing-proposed-updates.txt
-./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIR/experimental.txt -I $WORKDIR/unstable.txt -X $WORKDIR/testing-proposed-updates.txt -S unstable
+./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIR/experimental.txt -X $WORKDIR/testing.txt -X $WORKDIR/testing-proposed-updates.txt
+./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIR/experimental.txt -I $WORKDIR/testing.txt -X $WORKDIR/testing-proposed-updates.txt -S testing
 
 # Produce pretty reports
 ./stats.py $QUIET
