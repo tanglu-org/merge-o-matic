@@ -31,10 +31,13 @@ else
 	trap "rmdir /srv/patches.tanglu.org/.lock" 0
 fi
 
-cd /srv/patches.tanglu.org/code
+MOMDIR = "/var/archive-kit/merge-o-matic"
+WORKDIR = "/srv/patches.tanglu.org"
+
+cd $MOMDIR
 #bzr update
 
-cp ./addcomment.py /srv/patches.tanglu.org/merges
+cp addcomment.py /srv/patches.tanglu.org/merges
 
 # Download new packages
 ./update-pool.py $QUIET debian tanglu
@@ -53,10 +56,8 @@ cp ./addcomment.py /srv/patches.tanglu.org/merges
 # ./mail-bugs.py $QUIET
 
 # Run the merge tool
-./produce-merges.py -X ../merge-blacklist.txt -X ../experimental.txt -X ../unstable.txt -X ../testing-proposed-updates.txt
-./produce-merges.py -X ../merge-blacklist.txt -I ../experimental.txt -X ../unstable.txt -X ../testing-proposed-updates.txt -S experimental
-./produce-merges.py -X ../merge-blacklist.txt -X ../experimental.txt -I ../unstable.txt -X ../testing-proposed-updates.txt -S unstable
-./produce-merges.py -X ../merge-blacklist.txt -X ../experimental.txt -X ../unstable.txt -I ../testing-proposed-updates.txt -S testing-proposed-updates
+./produce-merges.py -X $WORKDIR/merge-blacklist.txt -X $WORKDIRexperimental.txt -X $WORKDIRunstable.txt -X $WORKDIRtesting-proposed-updates.txt
+./produce-merges.py -X $WORKDIRmerge-blacklist.txt -X $WORKDIRexperimental.txt -I $WORKDIRunstable.txt -X $WORKDIRtesting-proposed-updates.txt -S unstable
 
 # Produce pretty reports
 ./stats.py $QUIET
