@@ -34,7 +34,7 @@ fi
 cd /srv/patches.tanglu.org/code
 #bzr update
 
-cp addcomment.py /srv/patches.tanglu.org/merges
+cp ./addcomment.py /srv/patches.tanglu.org/merges
 
 # Download new packages
 ./update-pool.py $QUIET debian tanglu
