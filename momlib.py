@@ -54,7 +54,7 @@ ROOT = "/srv/patches.tanglu.org"
 DISTROS = {
     "tanglu": {
         "mirror": "http://archive.tanglu.org/tanglu",
-        "dists": [ "aequorea" ],
+        "dists": [ "staging", "aequorea" ],
         "components": [ "main", "contrib", "non-free" ],
         "expire": True,
         },
