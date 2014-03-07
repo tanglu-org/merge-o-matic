@@ -54,7 +54,7 @@ ROOT = "/srv/patches.tanglu.org"
 DISTROS = {
     "tanglu": {
         "mirror": "http://archive.tanglu.org/tanglu",
-        "dists": [ "staging", "aequorea" ],
+        "dists": [ "staging", "bartholomea" ],
         "components": [ "main", "contrib", "non-free" ],
         "expire": True,
         },
@@ -68,7 +68,7 @@ DISTROS = {
 
 # Destination distribution and release
 OUR_DISTRO = "tanglu"
-OUR_DIST   = "aequorea"
+OUR_DIST   = "bartholomea"
 
 # Default source distribution and release
 SRC_DISTRO = "debian"
