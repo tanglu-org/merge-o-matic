@@ -152,7 +152,7 @@ def md5sum(filename):
 
 def sources_file(distro, dist, component):
     """Return the location of a local Sources file."""
-    return "%s/dists/%s-%s/%s/source/Sources.gz" % (ROOT, distro, dist,
+    return "%s/dists/%s-%s/%s/source/Sources" % (ROOT, distro, dist,
                                                     component)
 
 def pool_directory(distro, package):
